@@ -40,9 +40,6 @@ class Rule(ABC):
     def legal(self, move, state):
         return move in self.get_legal_moves(state)
 
-    def flatten(self):
-        return [self]
-
     @abstractmethod
     def state_requirements(self):
         return {}
@@ -111,12 +108,6 @@ class RuleSum(Rule):
         for rule in self.sub_rules:
             sub_string = sub_string + str(rule) + ' + '
         return '(' + sub_string[:-3] + ')'
-
-    def flatten(self):
-        flat = []
-        for rule in self.sub_rules:
-            flat.extend(rule.flatten())
-        return flat
 
     def state_requirements(self):
         requirements = {}

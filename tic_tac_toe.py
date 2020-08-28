@@ -1,5 +1,6 @@
 from rule import Rule
 from turn import SimpleTurn
+from coordinate_rule import UnoccupiedCoord
 
 
 class TicTacToeWin(Rule):
@@ -8,6 +9,7 @@ class TicTacToeWin(Rule):
         self.rows = kwargs.pop('rows')
         self.columns = kwargs.pop('columns')
         self.to_win = kwargs.pop('to_win')
+        self.win_masks = self.generate_win_masks(self.to_win, self.rows, self.columns)
         super().__init__(**kwargs)
 
     def __repr__(self):
@@ -67,12 +69,11 @@ class TicTacToeWin(Rule):
         return win_masks
 
     def state_requirements(self):
-        return {"win_masks": self.generate_win_masks(self.to_win, self.rows, self.columns),
-                "rows": self.rows, "columns": self.columns, "players": {'x': 0, 'o': 0}}
+        return {"players": {'x': 0, 'o': 0}}
 
     def legal(self, move, state):
         for player, occupancy in state['players'].items():
-            for mask in state['win_masks']:
+            for mask in self.win_masks:
                 if not ((~occupancy) & mask):
                     return True
         else:
@@ -88,46 +89,14 @@ class TicTacToeWin(Rule):
         return False
 
 
-class TicTacToeMove(Rule):
-    def __init__(self, **kwargs):
-        kwargs = {'rows': 3, 'columns': 3, **kwargs}
-        self.rows = kwargs.pop('rows')
-        self.columns = kwargs.pop('columns')
-        self.total = self.rows * self.columns
-        super().__init__(**kwargs)
-
-    def __repr__(self):
-        return 'TicTacToeMove'
-
-    def state_requirements(self):
-        return {'rows': self.rows, 'columns': self.columns, 'total': self.total}
-
-    def get_legal_moves(self, state):
-        legal = []
-        for n in range(state['total']):
-            for player, occupancy in state['players'].items():
-                if (1 << n) & occupancy:
-                    break
-            else:
-                legal.append((state['to_move'], n))
-        return legal
-
-    def execute_move(self, move, state):
-        player, move = move
-        state['players'][player] = state['players'][player] | (1 << move)
-        return state
-
-    def undo_move(self, move, state):
-        player, move = move
-        state['players'][player] = state['players'][player] & (~ move)
-        return state
-
-
 if __name__ == "__main__":
-    game = SimpleTurn() * (TicTacToeMove() - TicTacToeWin())
-    game_state = game.create_state(seq=['x', 'o'], to_move='x')
-    print(game_state)
-    print(game.get_legal_moves(game_state))
-    print(game.execute_move(game.get_legal_moves(game_state)[8], game_state))
-    print(TicTacToeMove().execute_move(['x', 1], game_state))
-    print((TicTacToeMove() - TicTacToeWin()).execute_move(['x', 2], game_state))
+    u = UnoccupiedCoords(9)
+    w = TicTacToeWin()
+    t = SimpleTurn()
+    g = t * (u - w)
+    s = g.create_state(seq=['x', 'o'], to_move='x')
+    print(s)
+    print(g.get_legal_moves(s))
+    print(g.execute_move(g.get_legal_moves(s)[8], s))
+    print(u.execute_move(['x', 1], s))
+    print((u - w).execute_move(['x', 2], s))
