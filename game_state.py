@@ -1,7 +1,7 @@
 
 
 class GameState:
-    def __init__(self, game, **kwargs):
+    def __init__(self, game=None, **kwargs):
         self.game = game
         self.items = kwargs
 
@@ -49,4 +49,4 @@ class GameState:
 
 
 if __name__ == "__main__":
-    pass
+    gs = GameState(None)
