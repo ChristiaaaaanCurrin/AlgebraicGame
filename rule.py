@@ -3,10 +3,8 @@ from game_state import GameState
 
 
 class Rule(ABC):
-    def __init__(self, **kwargs):
-        kwargs = {"max_iteration": 1, **kwargs}
-        self.max_iteration = kwargs.pop('max_iteration')
-        assert kwargs == {}, "unexpected arguments: " + str(kwargs)
+    def __init__(self, max_iteration=1):
+        self.max_iteration = max_iteration
 
     def __iter__(self):
         self.max_iteration = 1
@@ -34,10 +32,10 @@ class Rule(ABC):
     def create_state(self, **kwargs):
         return GameState(self, **{**self.state_requirements(), **kwargs})
 
-    def does_decorate(self, *move, state):
+    def does_decorate(self, state, *move):
         return True
 
-    def legal(self, move, state):
+    def legal(self, state, move):
         return move in self.get_legal_moves(state)
 
     @abstractmethod
@@ -49,11 +47,11 @@ class Rule(ABC):
         pass
 
     @abstractmethod
-    def execute_move(self, move, state):
+    def execute_move(self, state, move):
         pass
 
     @abstractmethod
-    def undo_move(self, move, state):
+    def undo_move(self, state, move):
         pass
 
 
@@ -71,13 +69,13 @@ class Pass(Rule):
     def get_legal_moves(self, state):
         return [self.val]
 
-    def execute_move(self, move, state):
+    def execute_move(self, state, move):
         if move == self.val:
             return state
         else:
             return False
 
-    def undo_move(self, move, state):
+    def undo_move(self, state, move):
         if move == self.val:
             return state
         else:
@@ -91,10 +89,10 @@ class ZeroRule(Rule):
     def get_legal_moves(self, state):
         return []
 
-    def execute_move(self, move, state):
+    def execute_move(self, state, move):
         return False
 
-    def undo_move(self, move, state):
+    def undo_move(self, state, move):
         return False
 
 
@@ -122,7 +120,7 @@ class RuleSum(Rule):
                 legal.append(move)
         return legal
 
-    def execute_move(self, move, state):
+    def execute_move(self, state, move):
         for rule in self.sub_rules:
             new_state = rule.execute_move(move, state)
             if new_state:
@@ -130,7 +128,7 @@ class RuleSum(Rule):
         else:
             return False
 
-    def undo_move(self, move, state):
+    def undo_move(self, state, move):
         for rule in self.sub_rules:
             new_state = rule.undo_move(move, state)
             if new_state:
@@ -155,10 +153,10 @@ class SubtractRule(Rule):
         legal = filter(lambda m: not self.negative.legal(m, state), self.positive.get_legal_moves(state))
         return legal
 
-    def execute_move(self, move, state):
+    def execute_move(self, state, move):
         return self.positive.execute_move(move, state)
 
-    def undo_move(self, move, state):
+    def undo_move(self, state, move):
         return self.positive.undo_move(move, state)
 
 
@@ -200,7 +198,7 @@ class RuleProduct(Rule):
             legal = new_legal
         return legal
 
-    def execute_move(self, move, state):
+    def execute_move(self, state, move):
         rules = self.sub_rules
         while move and rules and state:
             *move, comp = move
@@ -209,7 +207,7 @@ class RuleProduct(Rule):
             state = new_state if (self.blocking or new_state) else state
         return state
 
-    def undo_move(self, move, state):
+    def undo_move(self, state, move):
         rules = self.sub_rules
         while move and rules and state:
             *move, comp = move

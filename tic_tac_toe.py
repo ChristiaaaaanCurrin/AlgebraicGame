@@ -1,14 +1,13 @@
 from rule import Rule
 from turn import SimpleTurn
-from coordinate_rule import UnoccupiedCoord
+from bit_rule import BitOccupancy
 
 
 class TicTacToeWin(Rule):
-    def __init__(self, **kwargs):
-        kwargs = {'to_win': 3, 'rows': 3, 'columns': 3, **kwargs}
-        self.rows = kwargs.pop('rows')
-        self.columns = kwargs.pop('columns')
-        self.to_win = kwargs.pop('to_win')
+    def __init__(self, rows=3, columns=3, to_win=3, **kwargs):
+        self.rows = rows
+        self.columns = columns
+        self.to_win = to_win
         self.win_masks = self.generate_win_masks(self.to_win, self.rows, self.columns)
         super().__init__(**kwargs)
 
@@ -69,7 +68,7 @@ class TicTacToeWin(Rule):
         return win_masks
 
     def state_requirements(self):
-        return {"players": {'x': 0, 'o': 0}}
+        return {"players": {'x': 0, 'o': 0}, 'win_masks': []}
 
     def legal(self, move, state):
         for player, occupancy in state['players'].items():
@@ -89,14 +88,18 @@ class TicTacToeWin(Rule):
         return False
 
 
-if __name__ == "__main__":
-    u = UnoccupiedCoords(9)
+def tic_tac_toe(players=('x', 'o'), rows=3, columns=3, to_win=3):
+    u = BitOccupancy()
     w = TicTacToeWin()
     t = SimpleTurn()
     g = t * (u - w)
-    s = g.create_state(seq=['x', 'o'], to_move='x')
-    print(s)
-    print(g.get_legal_moves(s))
-    print(g.execute_move(g.get_legal_moves(s)[8], s))
-    print(u.execute_move(['x', 1], s))
-    print((u - w).execute_move(['x', 2], s))
+    s = g.create_state(seq=players,
+                       to_move=players[0],
+                       total=rows * columns,
+                       to_win=to_win,
+                       win_masks=w.generate_win_masks(rows=rows, columns=columns, to_win=to_win))
+    return g, s
+
+
+if __name__ == "__main__":
+    print(tic_tac_toe()[0].get_legal_moves(tic_tac_toe()[1]))

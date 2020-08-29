@@ -1,5 +1,6 @@
 from rule import Rule
 from turn import SimpleTurn
+from coordinate_rule import CoordinateRule
 
 
 class Check(Rule):
@@ -9,16 +10,16 @@ class Check(Rule):
     def state_requirements(self):
         return {'king': [], 'to_move': 'w', 'seq': ['w', 'b'], 'w': [], 'b': []}
 
-    def execute_move(self, move, state):
+    def execute_move(self, state, move):
         return False
 
-    def undo_move(self, move, state):
+    def undo_move(self, state, move):
         return False
 
     def get_legal_moves(self, state):
         return []
 
-    def legal(self, move, state):
+    def legal(self, state, move):
         player = state['to_move']
         state = state.game.execute_move(move, state)
         legal = self.in_check(player, state)
@@ -32,22 +33,6 @@ class Check(Rule):
                 return True
         else:
             return False
-
-
-class King(Rule):
-
-    def state_requirements(self):
-        return {'K': []}
-
-    def get_legal_moves(self, state):
-        for coords in state.key_intersection('K', state['to_move']):
-            pass
-
-    def execute_move(self, move, state):
-        pass
-
-    def undo_move(self, move, state):
-        pass
 
 
 if __name__ == "__main__":
