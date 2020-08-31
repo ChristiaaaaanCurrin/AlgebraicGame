@@ -1,4 +1,4 @@
-from rule import Rule, Pass
+from rule import Rule, ZeroRule
 
 
 class SimpleTurn(Rule):
@@ -25,16 +25,16 @@ class SimpleTurn(Rule):
         return state
 
 
-class OnTurn(Pass):
+class NotOnTurn(ZeroRule):
     def state_requirements(self):
         return {'to_move': ''}
 
-    def does_decorate(self, state, move):
+    def legal(self, state, move):
         for sub_move in move:
             if state['to_move'] in sub_move:
-                return True
+                return False
         else:
-            return False
+            return True
 
 
 if __name__ == "__main__":

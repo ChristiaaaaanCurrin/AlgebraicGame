@@ -1,4 +1,4 @@
-from rule import Rule
+from rule import Rule, ZeroRule
 
 
 class Unoccupied(Rule):
@@ -39,7 +39,7 @@ class Unoccupied(Rule):
         return state
 
 
-class RowPattern(Rule):
+class RowPattern(ZeroRule):
     def __init__(self, rows, columns, pattern_length, *keys, **kwargs):
         self.rows = rows
         self.columns = columns
@@ -71,17 +71,8 @@ class RowPattern(Rule):
         else:
             return False
 
-    def get_legal_moves(self, state):
-        return []
 
-    def execute_move(self, state, move):
-        return False
-
-    def undo_move(self, state, move):
-        return False
-
-
-class ColumnPattern(Rule):
+class ColumnPattern(ZeroRule):
     def __init__(self, rows, columns, pattern_length, *keys, **kwargs):
         self.rows = rows
         self.columns = columns
@@ -115,17 +106,8 @@ class ColumnPattern(Rule):
         else:
             return False
 
-    def get_legal_moves(self, state):
-        return []
 
-    def execute_move(self, state, move):
-        return False
-
-    def undo_move(self, state, move):
-        return False
-
-
-class DiagonalPattern(Rule):
+class DiagonalPattern(ZeroRule):
     def __init__(self, rows, columns, pattern_length, *keys, **kwargs):
         self.rows = rows
         self.columns = columns
@@ -166,12 +148,3 @@ class DiagonalPattern(Rule):
                     return True
         else:
             return False
-
-    def get_legal_moves(self, state):
-        return []
-
-    def execute_move(self, state, move):
-        return False
-
-    def undo_move(self, state, move):
-        return False

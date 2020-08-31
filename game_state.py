@@ -12,11 +12,7 @@ class GameState:
         return str(self.items)
 
     def __getitem__(self, item):
-        try:
-            return self.items[item]
-        except KeyError:
-            self.items[item] = None
-            return None
+        return self.items[item]
 
     def __setitem__(self, key, value):
         self.items.update(**{key: value})
@@ -24,23 +20,21 @@ class GameState:
     def key_intersection(self, *keys):
         """
         :param keys: correspond with keys for self.items
-        :return: list of rules that are in all bins keyed by one of keys or all top rules if no keys are given
+        :return: list of items that are in all lists keyed by one of keys; returns empty list if no keys are given
         """
         if keys:
             start, *keys = keys
             items = self.items[start]
             for key in keys:
-                items = filter(lambda r: key in r.keys, items)
+                items = filter(lambda item: item in self[key], items)
             return items
         else:
-            items = []
-            [items.extend(rules) for rules in self.items.values()]
-            return items
+            return []
 
     def key_union(self, *keys):
         """
         :param keys: correspond with keys for self.items
-        :return: list of items that are in any bins keyed by one of keys
+        :return: list of items that are in any lists keyed by one of keys
         """
         items = []
         for key in keys:
