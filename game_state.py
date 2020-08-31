@@ -6,7 +6,10 @@ class GameState:
         self.items = kwargs
 
     def __repr__(self):
-        return "State: " + str(self.game) + ", " + str(self.items)
+        return f'State: {self.game}, {self.items}'
+
+    def __str__(self):
+        return str(self.items)
 
     def __getitem__(self, item):
         try:

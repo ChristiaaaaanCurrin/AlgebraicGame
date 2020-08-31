@@ -32,7 +32,7 @@ class Rule(ABC):
     def create_state(self, **kwargs):
         return GameState(self, **{**self.state_requirements(), **kwargs})
 
-    def does_decorate(self, state, *move):
+    def does_decorate(self, state, move):
         return True
 
     def legal(self, state, move):
@@ -63,6 +63,9 @@ class Pass(Rule):
     def __repr__(self):
         return self.val.__repr__()
 
+    def __str__(self):
+        return self.val.__str__()
+
     def state_requirements(self):
         return {}
 
@@ -83,6 +86,9 @@ class Pass(Rule):
 
 
 class ZeroRule(Rule):
+    def __repr__(self):
+        return 'ZERO'
+
     def state_requirements(self):
         return {}
 
@@ -102,16 +108,23 @@ class RuleSum(Rule):
         super().__init__(**kwargs)
 
     def __repr__(self):
-        sub_string = ""
-        for rule in self.sub_rules:
-            sub_string = sub_string + str(rule) + ' + '
-        return '(' + sub_string[:-3] + ')'
+        return '(' + ' + '.join([rule.__repr__() for rule in self.sub_rules]) + ')'
+
+    def __str__(self):
+        return '(' + ' + '.join([rule.__str__() for rule in self.sub_rules]) + ')'
 
     def state_requirements(self):
         requirements = {}
         for rule in self.sub_rules:
             requirements.update(rule.state_requirements())
         return requirements
+
+    def legal(self, state, move):
+        for rule in self.sub_rules:
+            if rule.legal(state, move):
+                return True
+        else:
+            return False
 
     def get_legal_moves(self, state):
         legal = []
@@ -144,20 +157,19 @@ class SubtractRule(Rule):
         super().__init__(**kwargs)
 
     def __repr__(self):
-        return '(' + str(self.positive) + ' - ' + str(self.negative) + ')'
+        return f'({self.positive} - {self.negative})'
 
     def state_requirements(self):
         return {**self.positive.state_requirements(), **self.negative.state_requirements()}
 
     def get_legal_moves(self, state):
-        legal = filter(lambda m: not self.negative.legal(m, state), self.positive.get_legal_moves(state))
-        return legal
+        return filter(lambda m: not self.negative.legal(state, m), self.positive.get_legal_moves(state))
 
     def execute_move(self, state, move):
-        return self.positive.execute_move(move, state)
+        return self.positive.execute_move(state, move)
 
     def undo_move(self, state, move):
-        return self.positive.undo_move(move, state)
+        return self.positive.undo_move(state, state)
 
 
 class RuleProduct(Rule):
@@ -167,11 +179,10 @@ class RuleProduct(Rule):
         super().__init__(**kwargs)
 
     def __repr__(self):
-        sub_string = ""
-        joiner = ' * ' if self.blocking else ' *>'
-        for rule in self.sub_rules:
-            sub_string = sub_string + str(rule) + joiner
-        return sub_string[:-3]
+        return ' * '.join([rule.__repr__() for rule in self.sub_rules])
+
+    def __str__(self):
+        return ' * '.join([rule.__str__() for rule in self.sub_rules])
 
     def __iter__(self):
         return iter(self.sub_rules)
@@ -193,7 +204,7 @@ class RuleProduct(Rule):
             *rules, rule = rules
             for move1 in legal:
                 for move2 in rule.get_legal_moves(state):
-                    if rule.does_decorate(move2, *move1, state=state):
+                    if rule.does_decorate(state, (move2, *move1)):
                         new_legal.append((move2, *move1))
             legal = new_legal
         return legal
@@ -203,7 +214,7 @@ class RuleProduct(Rule):
         while move and rules and state:
             *move, comp = move
             *rules, rule = rules
-            new_state = rule.execute_move(comp, state)
+            new_state = rule.execute_move(state, comp)
             state = new_state if (self.blocking or new_state) else state
         return state
 
@@ -212,7 +223,7 @@ class RuleProduct(Rule):
         while move and rules and state:
             *move, comp = move
             *rules, rule = rules
-            state = rule.undo_move(comp, state)
+            state = rule.undo_move(state, comp)
         return state
 
 

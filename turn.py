@@ -1,4 +1,4 @@
-from rule import Rule
+from rule import Rule, Pass
 
 
 class SimpleTurn(Rule):
@@ -11,18 +11,30 @@ class SimpleTurn(Rule):
     def get_legal_moves(self, state):
         return [1]
 
-    def does_decorate(self, *move, state):
+    def does_decorate(self, state, move):
         return True
 
-    def execute_move(self, move, state):
+    def execute_move(self, state, move):
         state['turn'] = (state['turn'] + move) % len(state['seq'])
         state['to_move'] = state['seq'][state['turn']]
         return state
 
-    def undo_move(self, move, state):
+    def undo_move(self, state, move):
         state['turn'] = (state['turn'] + move) % len(state['seq'])
         state['to_move'] = state['seq'][state['turn']]
         return state
+
+
+class OnTurn(Pass):
+    def state_requirements(self):
+        return {'to_move': ''}
+
+    def does_decorate(self, state, move):
+        for sub_move in move:
+            if state['to_move'] in sub_move:
+                return True
+        else:
+            return False
 
 
 if __name__ == "__main__":
