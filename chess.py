@@ -1,6 +1,6 @@
 from rule import Rule
 from turn import SimpleTurn
-from coordinate_rule import SimpleCartesianMove, OutOfBoard
+from coordinate_rule import SimpleCartesianMove, OutOfBoard, CoordinatePiece
 
 
 class Check(Rule):
@@ -12,7 +12,7 @@ class Check(Rule):
         return 'Check'
 
     def state_requirements(self):
-        return {'king': [], 'to_move': 'w', 'seq': ['w', 'b'], 'w': [], 'b': []}
+        return {'king': [], 'to_move': 'w'}
 
     def execute_move(self, state, move):
         return False
@@ -38,11 +38,21 @@ class Check(Rule):
             return False
 
 
+def traditional_chess(players=('w', 'b'), ranks=8, files=8, *pieces):
+    pass
+
+
 if __name__ == "__main__":
     border = OutOfBoard()
-    king = SimpleCartesianMove((1, -1), (0, 1), 'K') - border
+    square = SimpleCartesianMove((1, -1), (0, 1), 'K')
+    diagonal = square * square
+    king = diagonal - border
 
     game = SimpleTurn() * king
-    game_state = game.create_state(to_move='y', seq=['y'], king=[(3, 3)], y=[(3, 3)], K=[(3, 3)], board=[4, 4])
-    print(game, game_state)
+    test_king = CoordinatePiece((0, 1), 'K', 'y', 'king')
+    game_state = game.create_state(to_move='y', seq=['y', 'b'], board=[4, 4], y=[], b=[], king=[])
+    test_king.add_to_state(game_state)
+
+    print(game)
+    print(game_state)
     print(game.get_legal_moves(game_state))

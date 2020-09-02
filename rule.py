@@ -26,8 +26,11 @@ class Rule(ABC):
     def __mul__(self, other):
         return RuleProduct(*self, *other)
 
-    def __pow__(self, other):
-        return RuleProduct(self, other)
+    def __and__(self, other):
+        return RuleAnd(self, other)
+
+    def __or__(self, other):
+        return RuleOr(self, other)
 
     def create_state(self, **kwargs):
         return GameState(self, **{**self.state_requirements(), **kwargs})
@@ -118,13 +121,6 @@ class RuleSum(Rule):
         for rule in self.sub_rules:
             requirements.update(rule.state_requirements())
         return requirements
-
-    def legal(self, state, move):
-        for rule in self.sub_rules:
-            if rule.legal(state, move):
-                return True
-        else:
-            return False
 
     def get_legal_moves(self, state):
         legal = []
@@ -227,12 +223,34 @@ class RuleProduct(Rule):
         return state
 
 
+class RuleAnd(RuleSum):
+    def __repr__(self):
+        return '(' + ' & '.join([rule.__repr__() for rule in self.sub_rules])
+
+    def legal(self, state, move):
+        return all(map(lambda r: r.legal(state, move), self.sub_rules))
+
+    def get_legal_moves(self, state):
+        return filter(lambda m: self.legal(state, m), super().get_legal_moves(state))
+
+
+class RuleOr(RuleSum):
+    def __repr__(self):
+        return '(' + ' | '.join([rule.__repr__() for rule in self.sub_rules])
+
+    def legal(self, state, move):
+        return any(map(lambda r: r.legal(state, move), self.sub_rules))
+
+    def get_legal_moves(self, state):
+        return filter(lambda m: self.legal(state, m), super().get_legal_moves(state))
+
+
 if __name__ == "__main__":
     one = Pass()
     zero = ZeroRule()
     two = one + one
-    four = two * zero + one
-    [print(num.get_legal_moves("any")) for num in (zero, one, two, four)]
+    four = two * (one & one)
+    [print(list(num.get_legal_moves("any"))) for num in (zero, one, two, four)]
     print(two.execute_move('ID', 'any'))
     print(list(one))
     print(four)
