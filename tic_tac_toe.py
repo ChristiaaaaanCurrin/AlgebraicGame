@@ -1,5 +1,7 @@
 from turn import SimpleTurn
 from bit_rule import Unoccupied, RowPattern, ColumnPattern, DiagonalPattern
+from rule import ZeroRule
+from evaluator import ZeroSum, WinLose
 
 
 def tic_tac_toe(players=('x', 'o'), rows=3, columns=3, to_win=3):
@@ -28,11 +30,30 @@ def tic_tac_toe_read(state, columns=3):
     return state_string
 
 
+def tic_tac_toe_evaluator(players=('x', 'o'), rows=3, columns=3, to_win=3):
+    wins = []
+    for player in players:
+        r = RowPattern(rows, columns, to_win, player)
+        c = ColumnPattern(rows, columns, to_win, player)
+        d = DiagonalPattern(rows, columns, to_win, player)
+        wins.append((player, d | c | r))
+    return ZeroSum(WinLose(*wins))
+
+
 if __name__ == "__main__":
     game, game_state = tic_tac_toe()
+    turn, other = game
+    un, win = other
+    rc, d = win
+    r, c = rc
+    [print(mask) for mask in d.detection_masks]
     print(game)
-    print(game.get_legal_moves(game_state))
-    while game.get_legal_moves(game_state):
-        print(tic_tac_toe_read(game.execute_move(game_state, game.get_legal_moves(game_state)[0]), 11))
+    evaluator = tic_tac_toe_evaluator()
+    for n in range(1):
         print(game.get_legal_moves(game_state))
+        print(r.legal(game_state, ''))
+        print(c.legal(game_state, ''))
+        print(d.legal(game_state, ''))
+        game.execute_move(game_state, game.get_legal_moves(game_state)[0])
+    print(evaluator.explore(game, game_state, -1))
 

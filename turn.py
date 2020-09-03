@@ -1,7 +1,7 @@
-from rule import Rule, ZeroRule
+from rule import Rule, ZeroRule, Countable
 
 
-class SimpleTurn(Rule):
+class SimpleTurn(Countable):
     def __repr__(self):
         return 'SimpleTurn'
 
@@ -10,9 +10,6 @@ class SimpleTurn(Rule):
 
     def get_legal_moves(self, state):
         return [1]
-
-    def does_decorate(self, state, move):
-        return True
 
     def execute_move(self, state, move):
         state['turn'] = (state['turn'] + move) % len(state['seq'])
@@ -35,10 +32,3 @@ class NotOnTurn(ZeroRule):
                 return False
         else:
             return True
-
-
-if __name__ == "__main__":
-    game = SimpleTurn()
-    game_state = game.create_state(seq=['x', 'o'])
-    print(game_state.game.get_legal_moves(game_state))
-

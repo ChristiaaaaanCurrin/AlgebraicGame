@@ -8,55 +8,77 @@ class Evaluator(ABC):
         super().__init__()
 
     @abstractmethod
-    def evaluate(self, game):
+    def evaluate(self, state):
         """
-        :param game: game to be evaluated
+        :param state: game state to be evaluated
         :return: evaluation of game, (dictionary of values keyed by players)
         """
         pass
 
-    def explore(self, game, depth, width=-1, temp=1, k=1):
+    def explore(self, game, state, depth, width=-1, temp=1, k=1):
         """
         searches game tree and applies max_n algorithm to evaluate current game
-        :param game: game to be explored
+        :param state: game state to be explored
+        :param game: game to guide search tree
         :param depth: maximum depth of search
         :param width: maximum branches from this node
         :param temp: probability of selecting the child branches randomly
         :param k: depth of intermediate searches for determining continuation line
         :return: evaluation of current game ( = utility from the end of the expected branch)
         """
-        player = game.get_player()
-        legal = game.get_legal_moves()
+        player = state['to_move']
+        legal = game.get_legal_moves(state)
         if 0 <= width < len(legal):
             if temp < random():
                 def evaluate(m):
-                    game.execute_move(m)
-                    utility = self.explore(game, k)[player]
-                    game.undo_move(m)
+                    game.execute_move(state, m)
+                    utility = self.explore(game, state, k)[player]
+                    game.undo_move(state, m)
                     return utility
                 legal = sorted(legal, key=evaluate)[:width]
             else:
                 legal = sample(game.get_legal_moves(), width)
         if depth == 0 or not legal:
-            return self.evaluate(game)
+            return self.evaluate(state)
         else:
             utilities = []
             for move in legal:
-                game.execute_move(move)
-                utilities.append(self.explore(depth - 1, width, temp))
-                game.undo_move(move)
+                game.execute_move(state, move)
+                utilities.append(self.explore(game, state, depth - 1, width, temp))
+                game.undo_move(state, move)
             return max_by_key(player, utilities)
 
 
 class ZeroSum(Evaluator):
-    def __init__(self, *utility_funcs, **kwargs):
-        self.utilities = utility_funcs
+    def __init__(self, *evaluators, **kwargs):
+        self.evaluators = evaluators
         super().__init__(**kwargs)
 
-    def evaluate(self, game):
+    def evaluate(self, state):
+        utilities = {}
+        for evaluator in self.evaluators:
+            utilities.update(evaluator.evaluate(state))
+        total = 0
+        for player, utility in utilities.items():
+            total += utility
+        for player in utilities:
+            utilities[player] = utilities[player] / total if total else 1 / len(utilities)
+        return utilities
+
+
+class WinLose(Evaluator):
+    def __init__(self, *wins, **kwargs):
+        self.wins = wins
+        super().__init__(**kwargs)
+
+    def evaluate(self, state):
         utility = {}
-        for func in self.utilities:
-            utility.update(func(game))
+        for player, win in self.wins:
+            if win.legal(state, ''):
+                utility[player] = 1
+            else:
+                utility[player] = 0
+        return utility
 
 
 def max_by_key(key, dictionaries):

@@ -1,13 +1,16 @@
-from rule import Rule, ZeroRule
+from rule import Rule, ZeroRule, Countable
 
 
-class Unoccupied(Rule):
+class Unoccupied(Countable):
     def __init__(self, *keys, **kwargs):
         self.keys = keys
         super().__init__(**kwargs)
 
     def __repr__(self):
         return f'Unoccupied: {self.keys}'
+
+    def __str__(self):
+        return 'Unoccupied'
 
     def state_requirements(self):
         if self.keys:
@@ -60,6 +63,9 @@ class RowPattern(ZeroRule):
     def __repr__(self):
         return f'RowPattern: {self.rows}x{self.columns}, {self.pattern_length}, {self.keys}'
 
+    def __str__(self):
+        return f'Row'
+
     def state_requirements(self):
         return dict([(key, 0) for key in self.keys])
 
@@ -87,13 +93,16 @@ class ColumnPattern(ZeroRule):
             self.detection_masks.append(column_mask)
             for r in range(rows - pattern_length):
                 column_mask = column_mask << columns
-                pattern_length.append(column_mask)
+                self.detection_masks.append(column_mask)
             column_mask = column_mask << 1
 
         super().__init__(**kwargs)
 
     def __repr__(self):
         return f'ColumnPattern: {self.rows}x{self.columns}, {self.pattern_length}, {self.keys}'
+
+    def __str__(self):
+        return 'Column'
 
     def state_requirements(self):
         return dict([(key, 0) for key in self.keys])
@@ -137,6 +146,9 @@ class DiagonalPattern(ZeroRule):
 
     def __repr__(self):
         return f'DiagonalPattern: {self.rows}x{self.columns}, {self.pattern_length}, {self.keys}'
+
+    def __str__(self):
+        return 'Diagonal'
 
     def state_requirements(self):
         return dict([(key, 0) for key in self.keys])
