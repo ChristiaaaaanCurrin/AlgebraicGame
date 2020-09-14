@@ -1,0 +1,110 @@
+\documentclass{article}
+ 
+\usepackage{tikz}
+\usepackage{amsmath}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{amssymb}
+ 
+\title{Generalized Formalization of Game Rules}
+\author{Christiaan van de Sande \and Tanner Reese}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+
+\section{Rule Defenition}
+
+$ R (A, B) = ( \lambda, \mu, \phi, \rho ) $
+
+\subsection{The Four Functions}
+
+\begin{align*}
+  \lambda & : A \rightarrow \mathcal{P} (B) \\
+      \mu & : A \times B \rightarrow B  \\
+     \phi & : A \times B \rightarrow A 
+\end{align*}
+
+\begin{align*}
+  \phi ( \mu (a, b), b) = b
+\end{align*}
+
+\subsection{Equivalence in $ A $ and $ B $ }
+
+\subsection{Repeatablity of a Rule}
+
+\subsection{Independence between Rulse}
+
+Existence: $ \forall ~ b_R \in B_R, ~ \forall ~ b_S \in \lambda_S \circ \phi (b_R), ~ \exists ~ b'_S \in \lambda_S \circ \mu_R (b_R), b'_S \sim b''_S $ \\
+Uniquenes: $ \forall ~ b_S' \in \lambda \circ \mu_R (b_R), ~ b_S' \sim  b_S'' \implies \mu_S (b_S') = \mu_S (b_S'') $
+
+\subsection{Operations on Rules}
+
+\subsubsection{Negation of a Repeatable Rule}
+
+\begin{align*}
+          S (A, A) & = - R (A, A) \\
+  \lambda_S (a)    & = \begin{cases} \varnothing & \lambda_R (a) \neq \varnothing \\ \{ a \} & \lambda_R (a) = \varnothing \end{cases} \\
+      \mu_S (a, b)    & =  \mu_R (a, b) \\
+     \phi_S (a, b)    & = \phi_R (a, b) 
+\end{align*}
+
+\subsubsection{Union between Rules}
+
+\begin{align*}
+          T (A, B) & = R (A, B) \cup S (A, B) \\
+  \lambda_T (a)    & = \lambda_R (a) \cup \lambda_S (a) \\
+      \mu_T (a, b) & = \mu_R  (a, b)    = \mu_S  (a, b) \\
+     \phi_T (a, b) & = \phi_R (a, b)    = \phi_S (a, b)
+\end{align*}
+
+\subsubsection{Intersection between Rules}
+
+\begin{align*}
+          T (A, B) & = R (A, B) \cap S (A, B) \\
+  \lambda_T (a)    & = \lambda_R (a) \cap \lambda_S (a) \\
+      \mu_T (a, b) & =  \mu_R (a, b) =  \mu_S (a, b) \\
+     \phi_T (a, b) & = \phi_R (a, b) = \phi_S (a, b)
+\end{align*}
+
+\subsubsection{Indetpendent Product between Rules}
+The independent product ($ \times $) is only defined for rules that are Independent.
+\begin{align*}
+          T (A, (B \times C)) & = R (A, B) \times S (A, C) \\
+  \lambda_T (a)               & = \lambda_R (a) \times \lambda_S (a) \\
+      \mu_T (a, (b, c))       & =  \mu_R  ( \mu_S (a, c), b) \\
+     \phi_T (a, (b, c))       & = \phi_S  (\phi_R (a, b), c) 
+\end{align*}
+
+\subsubsection{Dependent Product between Rules}
+The dependent product between two rules $ S \cdot R $ is only defined if $ A_S = B_R $.
+\begin{align*}
+          T (A, (B \times C)) & = R (A, B) \cdot S (A, B) \\
+  \lambda_T (a)               & = \{ (b,c) | b \in \lambda_R (a), c \in \lambda_S (b) \} \\
+      \mu_T (a, (b, c))       & =   \mu_R (a,  \mu_S (b, c)) \\
+     \phi_T (a, (b, c))       & =  \phi_R (a, \phi_S (b, c)) 
+\end{align*}
+
+\subsubsection{Patterning of a Repeatable Rule over a Range}
+
+\begin{align*}
+     V (A, B)    & = R (B, B) \bigg\rvert_{S (A, B)}^{T (A, C)} \\
+    \nu_V (b)    & = \begin{cases} \{ b \} & \lambda_T (b) \neq \varnothing \\ \{ b \} \cup (\widehat{\nu}_V \circ \lambda_R (x)) & \lambda_T (b) = \varnothing \end{cases} \\
+\lambda_V (a)    & = \widehat{\nu}_V \circ \lambda_S (a) \\
+    \mu_V (a, b) & =  \mu_S (a,  \mu_R(b, b)) \\
+   \phi_V (a, b) & = \phi_S (a, \phi_R(b, b)) 
+\end{align*}
+
+\section{Implementation}
+
+\section{Implications}
+
+\subsection{Game Creation}
+
+\subsection{Game Analysis}
+
+\section{Conclusion}
+
+\end{document}
