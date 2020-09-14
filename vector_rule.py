@@ -1,29 +1,21 @@
-from rule import Rule, ZeroRule
+from rule import Countable, Rule
 from abc import ABC
+from numpy import array, zeros_like
 
 
-class CoordinatePiece:
-    def __init__(self, coords, *keys):
-        self.coords = coords
+class VectorPiece:
+    def __init__(self, coords, keys):
+        self.coords = array(coords)
         self.keys = keys
 
     def __eq__(self, other):
-        return self.coords == other.coords and self.keys == other.keys
+        return (self.coords == other.coords).all and self.keys == other.keys
 
     def __repr__(self):
         return f'{"".join(self.keys), self.coords}'
 
-    def __add__(self, other):
-        new_coords = tuple([old_coord + other.coords[i] for i, old_coord in enumerate(self.coords)])
-        return CoordinatePiece(new_coords, *self.keys, *other.keys)
-
-    def __sub__(self, other):
-        new_coords = tuple([old_coord - other.coords[i] for i, old_coord in enumerate(self.coords)])
-        return CoordinatePiece(new_coords, *filter(lambda x: x not in other.keys, self.keys))
-
-    def __neg__(self):
-        new_coords = tuple([-coord for coord in self.coords])
-        return CoordinatePiece(new_coords, *self.keys)
+    def __str__(self):
+        return str(tuple(self.coords))
 
     def add_to_state(self, state):
         for key in self.keys:
@@ -35,87 +27,134 @@ class CoordinatePiece:
                 state[key].remove(self)
 
 
-class CoordinateRule(Rule, ABC):
-    def __init__(self, *keys, on_turn=True, **kwargs):
-        self.keys = keys
-        self.on_turn = on_turn
+# -- Moving -----------------------------------------------
+
+class VectorMoveRule(Countable):
+    def __init__(self, *deltas, **kwargs):
         super().__init__(**kwargs)
+        self.deltas = [array(delta) for delta in deltas]
 
-    def state_requirements(self):
-        key_requirements = dict([(key, []) for key in self.keys])
-        return {'to_move': '', **key_requirements} if self.on_turn else key_requirements
-
-
-class OutOfBoard(ZeroRule):
     def __repr__(self):
-        return 'OutOfBoard'
+        return str(self.keys) + str(list(map(tuple, self.deltas)))
 
-    def state_requirements(self):
-        return {'board': []}
+    def __str__(self):
+        return str(self.keys)
 
-    def legal(self, state, move):
-        piece, delta = move
-        for index, component in enumerate((piece + CoordinatePiece(delta)).coords):
-            if not 0 <= component < state['board'][index]:
-                return True
-        else:
-            return False
+    def get_legal_moves(self, state):
+        legal = []
+        pieces = state.key_intersection(*self.keys)
+        for piece in pieces:
+            for delta in self.deltas:
+                legal.append((piece, delta))
+        return legal
 
-
-class CoordinateMoveRule(CoordinateRule, ABC):
     def execute_move(self, state, move):
         piece, delta = move
-        piece += CoordinatePiece(delta)
+        piece.coords += delta
         return state
 
     def undo_move(self, state, move):
         piece, delta = move
-        piece -= CoordinatePiece(delta)
+        piece.coords -= delta
+        return state
+
+    def state_requirements(self):
+        return dict([(key, []) for key in self.keys])
+
+
+class VectorMoveExtension(Rule):
+    def __init__(self, *deltas, **kwargs):
+        super().__init__(**kwargs)
+        self.deltas = [array(delta) for delta in deltas]
+
+    def legal(self, state, move):
+        piece, coords = move
+        return [(piece, coords + delta) for delta in self.deltas]
+
+    def state_requirements(self):
+        return {}
+
+    def execute_move(self, state, move):
+        piece, delta = move
+        piece.coords += delta
+        return state
+
+    def undo_move(self, state, move):
+        piece, delta = move
+        piece.coords -= delta
         return state
 
 
-class SimpleCartesianMove(CoordinateMoveRule):
-    def __init__(self, steps, coord_indices, *keys, **kwargs):
-        self.steps = steps
-        self.coord_indices = coord_indices
-        super().__init__(*keys, **kwargs)
+# -- Capturing --------------------------------------------
 
-    def __repr__(self):
-        return 'CartesianMove'
-
-    def get_legal_moves(self, state):
-        legal = []
-        keys = [*self.keys]
-        if self.on_turn:
-            keys.append(state['to_move'])
-        for piece in state.key_intersection(*keys):
-            for step in self.steps:
-                new_coords = [0] * len(piece.coords)
-                for i in self.coord_indices:
-                    new_coords[i] = [i]
-                    legal.append((piece, tuple(new_coords)))
-        return legal
-
-
-class CaptureRule(CoordinateRule, ABC):
-    def get_legal_moves(self, state):
-        return state.key_intersection(self.keys)
+class WithCapture(Rule, ABC):
+    def state_requirements(self):
+        return dict([(key, []) for key in self.keys])
 
     def execute_move(self, state, move):
         for piece in move:
             piece.remove_from_state(state)
         return state
 
-    def undo_move(self, state, move):
-        for piece in move:
+    def undo_move(self, state, consequence):
+        for piece in consequence:
             piece.add_to_state(state)
         return state
 
 
-class SimpleCapture(CaptureRule):
-    def does_decorate(self, state, move):
-        piece, *move = move
-        if piece.coords in move:
-            return True
-        else:
+class SimpleCapture(WithCapture):
+    def __repr__(self):
+        return 'SimpleCapture: ' + str(self.keys)
+
+    def legal(self, state, move):
+        to_capture = []
+        attacker, delta = move
+        pieces = state.key_union(*self.keys)
+        for piece in pieces:
+            if (piece.coords == attacker.coords + delta).all():
+                to_capture.append(piece)
+        return to_capture
+
+
+class RemoteCapture(WithCapture):
+    def __init__(self, *deltas, **kwargs):
+        self.deltas = deltas
+        super().__init__(**kwargs)
+
+    def legal(self, state, move):
+        to_capture = []
+        attacker, move_delta = move
+        pieces = state.key_intersection(*self.keys)
+        for piece in pieces:
+            for capture_delta in self.deltas:
+                if (piece.coords + capture_delta == attacker.coords + move_delta).all():
+                    to_capture.append(piece)
+        return to_capture
+
+
+# -- Board ------------------------------------------------
+
+class EuclideanBoard(Rule):
+    def __init__(self, *dimensions, **kwargs):
+        self.dimensions = array(dimensions)
+        self.zeros = zeros_like(self.dimensions)
+        super().__init__(**kwargs)
+
+    def __repr__(self):
+        return 'EuclideanBoard: ' + str(self.dimensions)
+
+    def legal(self, state, move):
+        piece, delta = move
+        if (self.zeros <= piece.coords + delta).all() and (piece.coords + delta < self.dimensions).all():
             return False
+        else:
+            return True
+
+    def execute_move(self, state, move):
+        return False
+
+    def undo_move(self, state, move):
+        return False
+
+    def state_requirements(self):
+        return {}

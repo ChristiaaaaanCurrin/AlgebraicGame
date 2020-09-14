@@ -1,4 +1,4 @@
-from rule import Rule, ZeroRule, Countable
+from rule import ZeroRule, Countable
 
 
 class SimpleTurn(Countable):
@@ -29,6 +29,6 @@ class NotOnTurn(ZeroRule):
     def legal(self, state, move):
         for sub_move in move:
             if state['to_move'] in sub_move:
-                return False
+                return []
         else:
-            return True
+            return [move]

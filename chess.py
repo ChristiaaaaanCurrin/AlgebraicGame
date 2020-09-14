@@ -1,6 +1,6 @@
-from rule import Rule
+from rule import Rule, RulePattern, TrueRule, ZeroRule
 from turn import SimpleTurn
-from coordinate_rule import SimpleCartesianMove, OutOfBoard, CoordinatePiece
+from vector_rule import SimpleCapture, VectorPiece, VectorMoveRule, EuclideanBoard, VectorMoveExtension
 
 
 class Check(Rule):
@@ -12,7 +12,7 @@ class Check(Rule):
         return 'Check'
 
     def state_requirements(self):
-        return {'king': [], 'to_move': 'w'}
+        return {'to_move': 'w', **dict([(key, []) for key in self.keys])}
 
     def execute_move(self, state, move):
         return False
@@ -20,39 +20,48 @@ class Check(Rule):
     def undo_move(self, state, move):
         return False
 
-    def get_legal_moves(self, state):
-        return []
-
     def legal(self, state, move):
         player = state['to_move']
-        state = self.game.execute_move(move, state)
-        legal = self.in_check(player, state)
-        state.game.undo_move(move, state)
+        state = self.game.execute_move(state, move)
+        legal = [move] if self.in_check(player, state) else []
+        self.game.undo_move(state, move)
         return legal
 
     def in_check(self, player, state):
-        for king in state.key_intersection('king', player):
-            if king in self.game.get_legal_moves(state):
-                return True
+        for king in state.key_intersection(*self.keys, player):
+            for to_capture, move in self.game.get_legal_moves(state):
+                if king in to_capture:
+                    return True
         else:
             return False
 
 
 def traditional_chess(players=('w', 'b'), ranks=8, files=8, *pieces):
-    pass
+    piece_keys = [*'KQNBRP']
+    board = EuclideanBoard(files, ranks)
+    king = (VectorMoveRule((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1),
+                           (1, 0), (1, 1), keys='K') - board) ** SimpleCapture(keys=piece_keys)
+
+    bishop = (RulePattern(VectorMoveExtension((-1, -1), (1, 1), (-1, 1), (1, -1)),
+                          VectorMoveRule((0, 0), keys='B'),
+                          TrueRule(),
+                          ZeroRule()) - board) ** SimpleCapture(keys=piece_keys)
+
+    game = SimpleTurn() * ((king + bishop) - Check(king, keys='k'))
+
+    game_state = game.create_state(to_move=players[0], seq=players, w=[], b=[], k=[])
+
+    for piece in pieces:
+        keys, *coords = piece.split('.')
+        coords = [int(coord) for coord in coords]
+        VectorPiece(coords=coords, keys=keys).add_to_state(game_state)
+
+    return game, game_state
 
 
 if __name__ == "__main__":
-    border = OutOfBoard()
-    square = SimpleCartesianMove((1, -1), (0, 1), 'K')
-    diagonal = square * square
-    king = diagonal - border
-
-    game = SimpleTurn() * king
-    test_king = CoordinatePiece((0, 1), 'K', 'y', 'king')
-    game_state = game.create_state(to_move='y', seq=['y', 'b'], board=[4, 4], y=[], b=[], king=[])
-    test_king.add_to_state(game_state)
-
-    print(game)
-    print(game_state)
-    print(game.get_legal_moves(game_state))
+    test_game, test_game_state = traditional_chess(('w', 'b'), 8, 8, 'Kb.0.0', 'Bw.0.1')
+    print(test_game)
+    print(test_game_state)
+    print(test_game.get_legal_moves(test_game_state))
+    print(test_game.execute_move(test_game_state, test_game.get_legal_moves(test_game_state)[0]))

@@ -1,14 +1,13 @@
 from turn import SimpleTurn
 from bit_rule import Unoccupied, RowPattern, ColumnPattern, DiagonalPattern
-from rule import ZeroRule
 from evaluator import ZeroSum, WinLose
 
 
 def tic_tac_toe(players=('x', 'o'), rows=3, columns=3, to_win=3):
     u = Unoccupied()
-    r = RowPattern(rows, columns, to_win, *players)
-    c = ColumnPattern(rows, columns, to_win, *players)
-    d = DiagonalPattern(rows, columns, to_win, *players)
+    r = RowPattern(rows, columns, to_win, keys=players)
+    c = ColumnPattern(rows, columns, to_win, keys=players)
+    d = DiagonalPattern(rows, columns, to_win, keys=players)
     t = SimpleTurn()
     g = t * (u - (r | c | d))
     s = g.create_state(seq=players, to_move=players[0],
@@ -33,9 +32,9 @@ def tic_tac_toe_read(state, columns=3):
 def tic_tac_toe_evaluator(players=('x', 'o'), rows=3, columns=3, to_win=3):
     wins = []
     for player in players:
-        r = RowPattern(rows, columns, to_win, player)
-        c = ColumnPattern(rows, columns, to_win, player)
-        d = DiagonalPattern(rows, columns, to_win, player)
+        r = RowPattern(rows, columns, to_win, keys=(player,))
+        c = ColumnPattern(rows, columns, to_win, keys=(player,))
+        d = DiagonalPattern(rows, columns, to_win, keys=(player,))
         wins.append((player, d | c | r))
     return ZeroSum(WinLose(*wins))
 

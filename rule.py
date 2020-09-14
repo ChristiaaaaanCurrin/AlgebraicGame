@@ -3,6 +3,9 @@ from game_state import GameState
 
 
 class Rule(ABC):
+    def __init__(self, keys=()):
+        self.keys = keys
+
     def __and__(self, other):
         return RuleAnd(self, other)
 
@@ -45,12 +48,15 @@ class Countable(Rule, ABC):
     def __mul__(self, other):
         return RuleProduct(self, other)
 
+    def __pow__(self, power, modulo=None):
+        return ModifiedRule(self, power)
+
     @abstractmethod
     def get_legal_moves(self, state):
         pass
 
     def legal(self, state, move):
-        return move in self.get_legal_moves(state)
+        return [move] if move in self.get_legal_moves(state) else []
 
 
 # -- Rule Combinations ------------------------------------
@@ -59,8 +65,9 @@ class RuleCombination(Rule, ABC):
 
     operator = ' combined with '
 
-    def __init__(self, *rules):
+    def __init__(self, *rules, **kwargs):
         self.sub_rules = rules
+        super().__init__(**kwargs)
 
     def __iter__(self):
         return iter(self.sub_rules)
@@ -100,19 +107,26 @@ class RuleAnd(RuleCombination):
     operator = ' & '
 
     def legal(self, state, move):
-        return all(map(lambda r: r.legal(state, move), self.sub_rules))
+        rule, *rules = self.sub_rules
+        legal = [rule.legal(state, move)]
+        for rule in rules:
+            legal = filter(lambda m: rule.legal(state, m), legal)
+        return legal
 
 
 class RuleOr(RuleCombination):
     operator = ' | '
 
     def legal(self, state, move):
-        return any(map(lambda r: r.legal(state, move), self.sub_rules))
+        legal = []
+        [legal.extend(rule.legal(state, move)) for rule in self.sub_rules]
+        return legal
 
 
 class NotRule(Rule):
-    def __init__(self, rule):
+    def __init__(self, rule, **kwargs):
         self.rule = rule
+        super().__init__(**kwargs)
 
     def __repr__(self):
         return '~' + self.rule.__repr__()
@@ -121,7 +135,7 @@ class NotRule(Rule):
         return '~' + self.rule.__str__()
 
     def legal(self, state, move):
-        return not self.rule.legal(state, move)
+        return [] if self.rule.legal(state, move) else [move]
 
     def state_requirements(self):
         return self.rule.state_requirements()
@@ -188,6 +202,48 @@ class RuleProduct(RuleCombination, Countable):
         return state
 
 
+class ModifiedRule(RuleProduct):
+    operator = ' ** '
+
+    def get_legal_moves(self, state):
+        rule, *modifiers = self.sub_rules
+        legal = []
+        for move in rule.get_legal_moves(state):
+            legal.append([move] + [modifier.legal(state, move) for modifier in modifiers])
+        return legal
+
+
+class RulePattern(RuleCombination, Countable):
+    def __init__(self, step, start, stop, skip):
+        self.step = step
+        self.start = start
+        self.stop = stop
+        self.skip = skip
+        super().__init__(self.step, self.start, self.stop, self.skip)
+
+    def __repr__(self):
+        return f'{self.step} |- {self.start}, {self.stop}, {self.skip}'
+
+    def get_legal_moves(self, state):
+
+        legal = self.start.get_legal_moves(state)
+        edge = []
+        [edge.extend(self.step.legal(state, move)) for move in legal]
+        checked = []
+
+        while edge:
+            new_edge = []
+            for move in edge:
+                print(move)
+                if not self.skip.legal(state, move) and move not in legal:
+                    legal.append(move)
+                if not self.stop.legal(state, move) and move not in checked:
+                    new_edge.extend(self.step.legal(state, move))
+                checked.append(move)
+            edge = new_edge
+        return legal
+
+
 # -- Elementary Rules -------------------------------------
 
 class ZeroRule(Countable):
@@ -232,3 +288,17 @@ class Pass(Countable):
 
     def state_requirements(self):
         return {}
+
+
+class TrueRule(Rule):
+    def legal(self, state, move):
+        return [move]
+
+    def state_requirements(self):
+        return {}
+
+    def execute_move(self, state, move):
+        return False
+
+    def undo_move(self, state, move):
+        return False

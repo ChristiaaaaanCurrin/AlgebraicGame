@@ -2,10 +2,6 @@ from rule import Rule, ZeroRule, Countable
 
 
 class Unoccupied(Countable):
-    def __init__(self, *keys, **kwargs):
-        self.keys = keys
-        super().__init__(**kwargs)
-
     def __repr__(self):
         return f'Unoccupied: {self.keys}'
 
@@ -43,11 +39,10 @@ class Unoccupied(Countable):
 
 
 class RowPattern(ZeroRule):
-    def __init__(self, rows, columns, pattern_length, *keys, **kwargs):
+    def __init__(self, rows, columns, pattern_length, **kwargs):
         self.rows = rows
         self.columns = columns
         self.pattern_length = pattern_length
-        self.keys = keys
 
         self.detection_masks = []
         row_mask = (1 << pattern_length) - 1
@@ -73,17 +68,16 @@ class RowPattern(ZeroRule):
         for key in self.keys:
             for mask in self.detection_masks:
                 if not ((~state[key]) & mask):
-                    return True
+                    return [move]
         else:
-            return False
+            return []
 
 
 class ColumnPattern(ZeroRule):
-    def __init__(self, rows, columns, pattern_length, *keys, **kwargs):
+    def __init__(self, rows, columns, pattern_length, **kwargs):
         self.rows = rows
         self.columns = columns
         self.pattern_length = pattern_length
-        self.keys = keys
 
         self.detection_masks = []
         column_mask = 1
@@ -111,17 +105,16 @@ class ColumnPattern(ZeroRule):
         for key in self.keys:
             for mask in self.detection_masks:
                 if not ((~state[key]) & mask):
-                    return True
+                    return [move]
         else:
-            return False
+            return []
 
 
 class DiagonalPattern(ZeroRule):
-    def __init__(self, rows, columns, pattern_length, *keys, **kwargs):
+    def __init__(self, rows, columns, pattern_length, **kwargs):
         self.rows = rows
         self.columns = columns
         self.pattern_length = pattern_length
-        self.keys = keys
 
         self.detection_masks = []
         diagonal_mask = 1
@@ -157,6 +150,6 @@ class DiagonalPattern(ZeroRule):
         for key in self.keys:
             for mask in self.detection_masks:
                 if not ((~state[key]) & mask):
-                    return True
+                    return [move]
         else:
-            return False
+            return []
