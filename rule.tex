@@ -44,7 +44,7 @@ A rule $R$ is repeatable iff $ A_R \subseteq B_R $
 
 \begin{define}
 Rules $ R (A, B) $ and $ S (A, C) $ are independent ($ R \perp S $) iff,
-for all $ a \in A $, $ b \in B $, $ c \in C $,
+for all ($ a \in A $, $ b \in B $, $ c \in C $),
 $ \mu_R (\mu_S (a, c), b) = \mu_S (\mu_R (a, b), c) $\\ 
 \end{define}
 
@@ -89,7 +89,7 @@ The independent product ($ \times $) is only defined for rules that are Independ
 \subsection{Dependent Product between Rules}
 The dependent product between two rules $ S \cdot R $ is only defined if $ A_S = B_R $.
 \begin{align}
-          T (A, (B \times C)) & = R (A, B) \cdot S (A, B) \\
+          T (A, (B \times C)) & = S (B, C) \cdot R (A, B) \\
   \lambda_T (a)               & = \{ (b,c) | b \in \lambda_R (a), c \in \lambda_S (b) \} \\
       \mu_T (a, (b, c))       & =   \mu_R (a,  \mu_S (b, c)) \\
      \phi_T (a, (b, c))       & =  \phi_R (a, \phi_S (b, c)) 
