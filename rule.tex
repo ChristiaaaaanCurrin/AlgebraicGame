@@ -4,9 +4,16 @@
 \usepackage{amsmath}
 \usepackage[margin=0.75in]{geometry}
 \usepackage{amssymb}
- 
+\usepackage{amsthm} 
+
 \title{Generalized Formalization of Game Rules}
 \author{Christiaan van de Sande \and Tanner Reese}
+
+\theoremstyle{definition}
+\newtheorem{define}{Definition}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
 
 \begin{document}
 
@@ -14,88 +21,89 @@
 
 \section{Introduction}
 
+\section{Rules}
 
-\section{Rule Defenition}
+\begin{define}
+A rule on sets $A$ and $B$, $ R (A, B) $, is a triple named functions:
+$ \lambda : A \rightarrow \mathcal{P} (B) $,
+$ \mu : A \times B \rightarrow A $, 
+and $ \phi : A \times B \rightarrow A $,
+where $ \mu (\phi (a, b), b) = a $.
+\end{define}
 
-$ R (A, B) = ( \lambda, \mu, \phi, \rho ) $
+The functions of a rule are responsible for replicating the mechanics of a game.
+The input set, $A$, is the set of all possible game states; the output set, $B$, is the set of all well formed moves that could apply to any game state.
+Then, $\lambda$ maps a given game state to a set of legal moves on that game state;
+$\mu$ maps a game state and a move to a new game state, and $\phi$.
 
-\subsection{The Four Functions}
+\section{Properties of rules}
 
-\begin{align*}
-  \lambda & : A \rightarrow \mathcal{P} (B) \\
-      \mu & : A \times B \rightarrow B  \\
-     \phi & : A \times B \rightarrow A 
-\end{align*}
+\begin{define}
+A rule $R$ is repeatable iff $ A_R \subseteq B_R $
+\end{define}
 
-\begin{align*}
-  \phi ( \mu (a, b), b) = b
-\end{align*}
+\begin{define}
+Rules $ R (A, B) $ and $ S (A, C) $ are independent ($ R \perp S $) iff,
+for all $ a \in A $, $ b \in B $, $ c \in C $,
+$ \mu_R (\mu_S (a, c), b) = \mu_S (\mu_R (a, b), c) $\\ 
+\end{define}
 
-\subsection{Equivalence in $ A $ and $ B $ }
+\section{Operations on Rules}
 
-\subsection{Repeatablity of a Rule}
+\subsection{Negation of a Repeatable Rule}
 
-\subsection{Independence between Rulse}
-
-Existence: $ \forall ~ b_R \in B_R, ~ \forall ~ b_S \in \lambda_S \circ \phi (b_R), ~ \exists ~ b'_S \in \lambda_S \circ \mu_R (b_R), b'_S \sim b''_S $ \\
-Uniquenes: $ \forall ~ b_S' \in \lambda \circ \mu_R (b_R), ~ b_S' \sim  b_S'' \implies \mu_S (b_S') = \mu_S (b_S'') $
-
-\subsection{Operations on Rules}
-
-\subsubsection{Negation of a Repeatable Rule}
-
-\begin{align*}
-          S (A, A) & = - R (A, A) \\
+\begin{align}
+          S (A, A) & = \neg R (A, A) \\
   \lambda_S (a)    & = \begin{cases} \varnothing & \lambda_R (a) \neq \varnothing \\ \{ a \} & \lambda_R (a) = \varnothing \end{cases} \\
       \mu_S (a, b)    & =  \mu_R (a, b) \\
      \phi_S (a, b)    & = \phi_R (a, b) 
-\end{align*}
+\end{align}
 
-\subsubsection{Union between Rules}
+\subsection{Union between Rules}
 
-\begin{align*}
+\begin{align}
           T (A, B) & = R (A, B) \cup S (A, B) \\
   \lambda_T (a)    & = \lambda_R (a) \cup \lambda_S (a) \\
       \mu_T (a, b) & = \mu_R  (a, b)    = \mu_S  (a, b) \\
      \phi_T (a, b) & = \phi_R (a, b)    = \phi_S (a, b)
-\end{align*}
+\end{align}
 
-\subsubsection{Intersection between Rules}
+\subsection{Intersection between Rules}
 
-\begin{align*}
+\begin{align}
           T (A, B) & = R (A, B) \cap S (A, B) \\
   \lambda_T (a)    & = \lambda_R (a) \cap \lambda_S (a) \\
       \mu_T (a, b) & =  \mu_R (a, b) =  \mu_S (a, b) \\
      \phi_T (a, b) & = \phi_R (a, b) = \phi_S (a, b)
-\end{align*}
+\end{align}
 
-\subsubsection{Indetpendent Product between Rules}
+\subsection{Indetpendent Product between Rules}
 The independent product ($ \times $) is only defined for rules that are Independent.
-\begin{align*}
+\begin{align}
           T (A, (B \times C)) & = R (A, B) \times S (A, C) \\
   \lambda_T (a)               & = \lambda_R (a) \times \lambda_S (a) \\
       \mu_T (a, (b, c))       & =  \mu_R  ( \mu_S (a, c), b) \\
      \phi_T (a, (b, c))       & = \phi_S  (\phi_R (a, b), c) 
-\end{align*}
+\end{align}
 
-\subsubsection{Dependent Product between Rules}
+\subsection{Dependent Product between Rules}
 The dependent product between two rules $ S \cdot R $ is only defined if $ A_S = B_R $.
-\begin{align*}
+\begin{align}
           T (A, (B \times C)) & = R (A, B) \cdot S (A, B) \\
   \lambda_T (a)               & = \{ (b,c) | b \in \lambda_R (a), c \in \lambda_S (b) \} \\
       \mu_T (a, (b, c))       & =   \mu_R (a,  \mu_S (b, c)) \\
      \phi_T (a, (b, c))       & =  \phi_R (a, \phi_S (b, c)) 
-\end{align*}
+\end{align}
 
-\subsubsection{Patterning of a Repeatable Rule over a Range}
+\subsection{Patterning of a Repeatable Rule over a Range}
 
-\begin{align*}
+\begin{align}
      V (A, B)    & = R (B, B) \bigg\rvert_{S (A, B)}^{T (A, C)} \\
     \nu_V (b)    & = \begin{cases} \{ b \} & \lambda_T (b) \neq \varnothing \\ \{ b \} \cup (\widehat{\nu}_V \circ \lambda_R (x)) & \lambda_T (b) = \varnothing \end{cases} \\
 \lambda_V (a)    & = \widehat{\nu}_V \circ \lambda_S (a) \\
     \mu_V (a, b) & =  \mu_S (a,  \mu_R(b, b)) \\
    \phi_V (a, b) & = \phi_S (a, \phi_R(b, b)) 
-\end{align*}
+\end{align}
 
 \section{Implementation}
 
