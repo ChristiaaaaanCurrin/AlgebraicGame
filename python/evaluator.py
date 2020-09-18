@@ -74,7 +74,7 @@ class WinLose(Evaluator):
     def evaluate(self, state):
         utility = {}
         for player, win in self.wins:
-            if win.legal(state, ''):
+            if win.get_legal_moves(state):
                 utility[player] = 1
             else:
                 utility[player] = 0

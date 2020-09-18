@@ -1,3 +1,5 @@
+module Rule where
+
 data Rule a b = R {lambda :: a -> [b], mu :: a -> b -> a, phi :: a ->  b -> a}
 
 union :: Rule a b -> Rule a b -> Rule a b
@@ -20,19 +22,6 @@ dependentProduct s r = R {lambda = (\x -> [(y, z) | y <- lambda r x, z <- lambda
                           mu     = (\x (y, z) -> mu  r x $ mu  s y z),
                           phi    = (\x (y, z) -> phi r x $ phi s y z)}
 
-contradict :: Rule a a -> Rule a a
-contradict r = R {lambda = (\x -> case () of 
-                                           _ | null $ lambda r x -> [x]
-                                             | otherwise -> []),
-                  mu = mu r,
-                  phi = phi r}
-               
-(/|) r s = union r s
-(/&) r s = intersection r s
-(/-) = contradict
-(/.) = dependentProduct
-(/*) = independentProduct
-
 patternStep :: (a -> [a]) -> (a -> Bool) -> a -> [a]
 patternStep step stop x
   | stop x = [x]
@@ -43,15 +32,25 @@ pattern r s t = R {lambda = concat . map (patternStep (lambda r) (null . lambda 
                    mu     = (\x y -> mu s x $ mu r y y),
                    phi    = (\x y -> phi s x $ phi r y y)}
 
-passRule :: Rule a a
-passRule = R {lambda = pure . id, mu = const, phi = const}
+boolRule :: Rule a b -> Rule a a
+boolRule r = R {lambda = (\x -> case (lambda r x) of {[] -> []; xs -> [x]}), mu = const, phi = const}
 
-constRule :: b -> Rule a b
-constRule y = R {lambda = pure . const y, mu = const, phi = const}
+passRule :: Rule a a
+passRule = R {lambda = pure, mu = const, phi = const}
 
 falseRule :: Rule a a
 falseRule = R {lambda = const [], mu = const, phi = const}
 
+negateRule :: Rule a b -> Rule a a
+negateRule r = R {lambda = (\x -> case (lambda r x) of {[] -> [x]; xs -> [x]}),  mu = const, phi = const}
 
-data TTCS = TTCS {toMove :: Char, players :: [(Char, Int)]}
+constRule :: b -> Rule a b
+constRule y = R {lambda = pure . const y, mu = const, phi = const}
+
+(|+) r s = union r s
+(&+) r s = intersection r s
+(|-) r s = union r $ negateRule s 
+(&-) r s = intersection r $ negateRule s
+(&*) r s = dependentProduct r s
+(|*) r s= independentProduct r s
 

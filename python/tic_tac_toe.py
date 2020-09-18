@@ -1,6 +1,6 @@
-from turn import SimpleTurn
-from bit_rule import Unoccupied, RowPattern, ColumnPattern, DiagonalPattern
-from evaluator import ZeroSum, WinLose
+from python.turn import SimpleTurn
+from python.bit_rule import Unoccupied, RowPattern, ColumnPattern, DiagonalPattern
+from python.evaluator import ZeroSum, WinLose
 
 
 def tic_tac_toe(players=('x', 'o'), rows=3, columns=3, to_win=3):

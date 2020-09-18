@@ -1,6 +1,6 @@
-from rule import Rule, RulePattern, TrueRule, ZeroRule
-from turn import SimpleTurn
-from vector_rule import SimpleCapture, VectorPiece, VectorMoveRule, EuclideanBoard, VectorMoveExtension
+from python.rule import Rule, RulePattern, TrueRule, ZeroRule
+from python.turn import SimpleTurn
+from python.vector_rule import SimpleCapture, VectorPiece, VectorMoveRule, EuclideanBoard, VectorMoveExtension
 
 
 class Check(Rule):

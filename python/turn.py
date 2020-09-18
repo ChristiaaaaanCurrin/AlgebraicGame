@@ -1,7 +1,7 @@
-from rule import ZeroRule, Countable
+from python.rule import Rule
 
 
-class SimpleTurn(Countable):
+class SimpleTurn(Rule):
     def __repr__(self):
         return 'SimpleTurn'
 
@@ -20,15 +20,3 @@ class SimpleTurn(Countable):
         state['turn'] = (state['turn'] + move) % len(state['seq'])
         state['to_move'] = state['seq'][state['turn']]
         return state
-
-
-class NotOnTurn(ZeroRule):
-    def state_requirements(self):
-        return {'to_move': ''}
-
-    def legal(self, state, move):
-        for sub_move in move:
-            if state['to_move'] in sub_move:
-                return []
-        else:
-            return [move]

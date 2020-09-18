@@ -1,7 +1,7 @@
-from rule import Rule, ZeroRule, Countable
+from python.rule import Rule, ZeroRule
 
 
-class Unoccupied(Countable):
+class Unoccupied(Rule):
     def __repr__(self):
         return f'Unoccupied: {self.keys}'
 
