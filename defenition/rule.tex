@@ -1,5 +1,5 @@
 \documentclass{article}
- 
+
 \usepackage{tikz}
 \usepackage{amsmath}
 \usepackage[margin=0.75in]{geometry}
@@ -10,10 +10,12 @@
 \author{Christiaan van de Sande \and Tanner Reese}
 
 \theoremstyle{definition}
-\newtheorem{define}{Definition}[section]
+\newtheorem{definition}{Definition}[section]
 
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}
+
+\def\rule{\mathcal{R}}
 
 \begin{document}
 
@@ -23,87 +25,135 @@
 
 \section{Rules}
 
-\begin{define}
-A rule on sets $A$ and $B$, $ R (A, B) $, is a triple named functions:
-$ \lambda : A \rightarrow \mathcal{P} (B) $,
-$ \mu : A \times B \rightarrow A $, 
-and $ \phi : A \times B \rightarrow A $,
-where $ \mu (\phi (a, b), b) = a $.
-\end{define}
+\begin{definition}
+  A rule $ (r) $ on sets $ A $ and $ B $ is denoted by $ r \in \rule (A, B) $,
+  with $ \lambda_r : A          \rightarrow \mathcal{P} (B) $,
+       $     \mu_r : A \times B \rightarrow B $,
+       $    \phi_r : A \times B \rightarrow B $, 
+  such that $ \mu_r (\phi_r (a, b), b) = a $
+  and $ \phi_r (\mu_r (a, b), b) = a $.
+\end{definition}
 
 The functions of a rule are responsible for replicating the mechanics of a game.
 The input set, $A$, is the set of all possible game states; the output set, $B$, is the set of all well formed moves that could apply to any game state.
 Then, $\lambda$ maps a given game state to a set of legal moves on that game state;
-$\mu$ maps a game state and a move to a new game state, and $\phi$.
+$\mu$ maps a game state and a move to a new game state,
+and $\phi$ reverts the change made by $\mu$.
 
 \section{Properties of rules}
 
-\begin{define}
-A rule $R$ is repeatable iff $ A_R \subseteq B_R $
-\end{define}
+\begin{definition}
+  Let $ r \in \rule (A, B) $. $ r $ is \textbf{repeatable} iff $ A \subseteq B $.
+\end{definition}
 
-\begin{define}
-Rules $ R (A, B) $ and $ S (A, C) $ are independent ($ R \perp S $) iff,
-for all ($ a \in A $, $ b \in B $, $ c \in C $),
-$ \mu_R (\mu_S (a, c), b) = \mu_S (\mu_R (a, b), c) $\\ 
-\end{define}
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s \in \rule (A, C) $.
+  $r$ and $s$ are \textbf{independent} ($ r \perp s $) iff,
+  for all ($ a \in A $, $ b \in B $, $ c \in C $),
+  $ \mu_r (\mu_s (a, c), b) = \mu_s (\mu_r (a, b), c) $. 
+\end{definition}
 
 \section{Operations on Rules}
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s $ be the \textbf{reduction} of $ r $.
+  Then $ s \in \rule (A, A) $, where:
+  \begin{align}
+            s        & = \overline{r} \\
+    \lambda_s (a)    & = \begin{cases}
+                           \varnothing & \lambda_r (a) = \varnothing \\
+                           \{ a \}     & \lambda_r (a) \neq \varnothing
+                         \end{cases} \\
+        \mu_s (a, b) & = a \\
+       \phi_s (a, b) & = a.
+  \end{align}
+\end{definition}
 
-\subsection{Negation of a Repeatable Rule}
+\begin{definition}
+  Let $ r \in \rule (A, A) $
+  and $ s $ be the \textbf{negation} of $ r $.
+  Then $ s \in \rule (A, A) $, where:
+  \begin{align}
+            s        & = \neg r \\
+    \lambda_s (a)    & = \begin{cases}
+                           \varnothing & \lambda_r (a) \neq \varnothing \\
+                           \{ a \}     & \lambda_r (a) = \varnothing
+                         \end{cases} \\
+        \mu_s (a, b) & =  \mu_r (a, b) \\
+       \phi_s (a, b) & = \phi_r (a, b).
+  \end{align}
+\end{definition}
 
-\begin{align}
-          S (A, A) & = \neg R (A, A) \\
-  \lambda_S (a)    & = \begin{cases} \varnothing & \lambda_R (a) \neq \varnothing \\ \{ a \} & \lambda_R (a) = \varnothing \end{cases} \\
-      \mu_S (a, b)    & =  \mu_R (a, b) \\
-     \phi_S (a, b)    & = \phi_R (a, b) 
-\end{align}
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s \in \rule (A, B) $
+  and $ t $ be the \textbf{union} of $ r $ and $ s $.
+  Then $ t \in \rule (A, B) $, where:
+  \begin{align}
+            t        & = s \cup r \\
+    \lambda_t (a)    & = \lambda_r (a) \cup \lambda_s (a) \\
+        \mu_t (a, b) & = \mu_r  (a, b)    = \mu_s  (a, b) \\
+       \phi_t (a, b) & = \phi_r (a, b)    = \phi_s (a, b).
+  \end{align}
+\end{definition}
 
-\subsection{Union between Rules}
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s \in \rule (A, B) $
+  and $ t $ be the \textbf{intersection} of $ r $ and $ s $.
+  Then $ t \in \rule (A, B) $, where:
+  \begin{align}
+            t        & = s \cap r \\
+    \lambda_t (a)    & = \lambda_r (a) \cap \lambda_s (a) \\
+        \mu_t (a, b) & = \mu_r  (a, b)    = \mu_s  (a, b) \\
+       \phi_t (a, b) & = \phi_r (a, b)    = \phi_s (a, b).
+  \end{align}
+\end{definition}
 
-\begin{align}
-          T (A, B) & = R (A, B) \cup S (A, B) \\
-  \lambda_T (a)    & = \lambda_R (a) \cup \lambda_S (a) \\
-      \mu_T (a, b) & = \mu_R  (a, b)    = \mu_S  (a, b) \\
-     \phi_T (a, b) & = \phi_R (a, b)    = \phi_S (a, b)
-\end{align}
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s \in \rule (A, C) $
+  and $ t $ be the \textbf{independent product} of $ r $ and $ s $.
+  Then $ t \in \rule (A, B \times C) $, where:
+  \begin{align}
+            t             & = s \times r \\
+    \lambda_t (a)         & = \lambda_r (a) \times \lambda_s (a) \\
+        \mu_t (a, (b, c)) & =     \mu_r ( \mu_s (a, c), b) \\
+       \phi_t (a, (b, c)) & =    \phi_s (\phi_r (a, b), c).
+  \end{align}
+\end{definition}
 
-\subsection{Intersection between Rules}
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s \in \rule (B, C) $
+  and $ t $ be the \textbf{dependent product} of $ r $ and $ s $.
+  Then $ t \in \rule (A, B \times C) $, where:
+  \begin{align}
+            t             & = s \cdot r \\
+    \lambda_t (a)         & = \{ (b, c) | b \in \lambda_r (a), c \in \lambda_s (b) \} \\
+        \mu_t (a, (b, c)) & =     \mu_r ( \mu_s (a, c), b) \\
+       \phi_t (a, (b, c)) & =    \phi_s (\phi_r (a, b), c).
+  \end{align}
+\end{definition}
 
-\begin{align}
-          T (A, B) & = R (A, B) \cap S (A, B) \\
-  \lambda_T (a)    & = \lambda_R (a) \cap \lambda_S (a) \\
-      \mu_T (a, b) & =  \mu_R (a, b) =  \mu_S (a, b) \\
-     \phi_T (a, b) & = \phi_R (a, b) = \phi_S (a, b)
-\end{align}
-
-\subsection{Indetpendent Product between Rules}
-The independent product ($ \times $) is only defined for rules that are Independent.
-\begin{align}
-          T (A, (B \times C)) & = R (A, B) \times S (A, C) \\
-  \lambda_T (a)               & = \lambda_R (a) \times \lambda_S (a) \\
-      \mu_T (a, (b, c))       & =  \mu_R  ( \mu_S (a, c), b) \\
-     \phi_T (a, (b, c))       & = \phi_S  (\phi_R (a, b), c) 
-\end{align}
-
-\subsection{Dependent Product between Rules}
-The dependent product between two rules $ S \cdot R $ is only defined if $ A_S = B_R $.
-\begin{align}
-          T (A, (B \times C)) & = S (B, C) \cdot R (A, B) \\
-  \lambda_T (a)               & = \{ (b,c) | b \in \lambda_R (a), c \in \lambda_S (b) \} \\
-      \mu_T (a, (b, c))       & =   \mu_R (a,  \mu_S (b, c)) \\
-     \phi_T (a, (b, c))       & =  \phi_R (a, \phi_S (b, c)) 
-\end{align}
-
-\subsection{Patterning of a Repeatable Rule over a Range}
-
-\begin{align}
-     V (A, B)    & = R (B, B) \bigg\rvert_{S (A, B)}^{T (A, C)} \\
-    \nu_V (b)    & = \begin{cases} \{ b \} & \lambda_T (b) \neq \varnothing \\ \{ b \} \cup (\widehat{\nu}_V \circ \lambda_R (x)) & \lambda_T (b) = \varnothing \end{cases} \\
-\lambda_V (a)    & = \widehat{\nu}_V \circ \lambda_S (a) \\
-    \mu_V (a, b) & =  \mu_S (a,  \mu_R(b, b)) \\
-   \phi_V (a, b) & = \phi_S (a, \phi_R(b, b)) 
-\end{align}
+\begin{definition}
+  Let $ r \in \rule (B, B) $
+  and $ s \in \rule (A, B) $
+  and $ t \in \rule (A, C) $
+  and $ v $ be $ r $ \textbf{patterned} from $ s $ to $ t $.
+  Then, $ v \in \rule (A, B) $, where:
+  \begin{align}
+          v        & = r \rvert_{s}^{t} \\
+      \nu_v (b)    & = \begin{cases}
+                         \{ b \}                                            & \lambda_t (b) \neq \varnothing \\
+                         \{ b \} \cup (\widehat{\nu}_v \circ \lambda_r (x)) & \lambda_t (b) =    \varnothing
+                       \end{cases} \\
+  \lambda_v (a)    & = \widehat{\nu}_v \circ \lambda_s (a) \\
+      \mu_v (a, b) & =  \mu_s (a,  \mu_r (b, b)) \\
+     \phi_v (a, b) & = \phi_s (a, \phi_r (b, b)) 
+  \end{align}
+\end{definition}
 
 \section{Implementation}
 
