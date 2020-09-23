@@ -132,8 +132,8 @@ and $\phi$ reverts the change made by $\mu$.
   \begin{align}
             t             & = s \cdot r \\
     \lambda_t (a)         & = \{ (b, c) | b \in \lambda_r (a), c \in \lambda_s (b) \} \\
-        \mu_t (a, (b, c)) & =     \mu_r ( \mu_s (a, c), b) \\
-       \phi_t (a, (b, c)) & =    \phi_s (\phi_r (a, b), c).
+        \mu_t (a, (b, c)) & =     \mu_r (a,  \mu_s (b, c)) \\
+       \phi_t (a, (b, c)) & =    \phi_r (a, \phi_s (b, b)).
   \end{align}
 \end{definition}
 
