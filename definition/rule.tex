@@ -1,0 +1,191 @@
+\documentclass{article}
+
+\usepackage{tikz}
+\usepackage{amsmath}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{amssymb}
+\usepackage{amsthm} 
+
+\title{Generalized Formalization of Games}
+\author{Christiaan van de Sande \and Tanner Reese}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[subsection]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+
+\def\rule{\mathcal{R}}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+ 
+\section{Games}
+
+\section{Rules}
+
+\subsection{Motivation and Definition}
+
+The purpose of a rule is to define legal transitions between states in a game.
+It may be tempting to define a rule as a function from one state to another state, but this approach is very limited.
+It does not help to describe the moves themselves, only the consequences of those moves.
+The definition of a rule must include
+the definition of a function $ \lambda $ that generates the legal moves from a given state
+and the definition of a function $ \phi $ that executes a given move on a given state.
+The moves must be independent of the state, so that the same move can be executed on different states.
+Moves must also be reversable,
+meaning that, given any states $ s $ and $ s' $ and move $ m $,
+where $ m $ is the move from $ s $ to $ s' $,
+there must be a way to find $ s $ from only $ s' $ and $ m $.
+This reverse operation is the responsibility of a third function $ \rho $.
+The requirements of these three functions gives the following definition for a rule:
+
+ \begin{definition}
+  $ r $ is a \textbf{rule} on sets $ A $ and $ B $ (written  $ r \in \rule (A, B) $) iff
+  $ \lambda_r : A          \rightarrow \mathcal{P} (B) $,
+  $    \phi_r : A \times B \rightarrow A $,
+  $    \rho_r : A \times B \rightarrow A $,
+  such that $ \phi_r (\rho_r (a, b), b) = a $
+  and $ \rho_r (\phi_r (a, b), b) = a $.
+\end{definition}
+
+For the rule-of-play, $ r $, of a game,
+the set of all well-formed states, $ S $, forms an input set for $ r $
+and the set of all well-formed moves, $ M $, forms an output set for $ r $,
+so $ r \in \rule (S, M) $.
+However, not all rules have the set of well-formed states as their input set.
+Take, for example, the rule for capturing in chess.
+In most cases, captures are performed by moving one piece onto a square occupied by another piece
+(the notable exception to this rule is en-passant capturing)
+Thus, the legal captures are dependent, not only on the state (i.e. where all the pieces are located),
+but also on the move being made, a piece only captures on the square that it moves to.
+It is \emph{possible} to define a function that finds all legal captures
+and a second function that finds all legal moves that are not captures,
+but this approach sacrifices the modularity of
+having one rule that is responsible for the \emph{movement} of pieces
+and having another rule that is responsible for the conditions under which pieces are \emph{captured}.
+For chess captures, then, the input set is the cartesian product of the set of all well-formed states
+and the set of all piece moves.
+
+\subsection{Operations on Rules}
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s $ be the \textbf{reduction} of $ r $ (written $ s = |r| $).
+  Then $ s \in \rule (A, A) $, where:
+  \begin{align}
+    \lambda_s (a)    & = \begin{cases}
+                           \varnothing & \lambda_r (a) = \varnothing \\
+                           \{ a \}     & \lambda_r (a) \neq \varnothing
+                         \end{cases} \\
+       \phi_s (a, b) & = a \\
+       \rho_s (a, b) & = a.
+  \end{align}
+\end{definition}
+
+\begin{definition}
+  Let $ r \in \rule (A, A) $
+  and $ s $ be the \textbf{negation} of $ r $ (written $ s = \overline{r} $).
+  Then $ s \in \rule (A, A) $, where:
+  \begin{align}
+    \lambda_s (a)    & = \begin{cases}
+                           \varnothing & \lambda_r (a) \neq \varnothing \\
+                           \{ a \}     & \lambda_r (a) = \varnothing
+                         \end{cases} \\
+       \phi_s (a, b) & = \phi_r (a, b) \\
+       \rho_s (a, b) & = \rho_r (a, b).
+  \end{align}
+\end{definition}
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s \in \rule (A, B) $
+  and $ t $ be the \textbf{union} of $ s $ and $ r $ (written $ t = s \cup r $).
+  Then $ t \in \rule (A, B) $, where:
+  \begin{align}
+    \lambda_t (a)    & = \lambda_r (a) \cup \lambda_s (a) \\
+       \phi_t (a, b) & =    \phi_s (a, b) \\
+       \rho_t (a, b) & =    \rho_s (a, b).
+  \end{align}
+\end{definition}
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s \in \rule (A, B) $
+  and $ t $ be the \textbf{intersection} of $ s $ and $ r $ (written $ t = s \cap r $).
+  Then $ t \in \rule (A, B) $, where:
+  \begin{align}
+    \lambda_t (a)    & = \lambda_r (a) \cap \lambda_s (a) \\
+       \phi_t (a, b) & = \phi_r (a, b) \\
+       \rho_t (a, b) & = \rho_r (a, b).
+  \end{align}
+\end{definition}
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s \in \rule (A, C) $
+  and $ t $ be the \textbf{independent product} of $ s $ and $ r $ (written $ t = s \times r $).
+  Then $ t \in \rule (A, B \times C) $, where:
+  \begin{align}
+    \lambda_t (a)         & = \lambda_r (a) \times \lambda_s (a) \\
+       \phi_t (a, (b, c)) & =    \phi_r (\phi_s (a, c), b) \\
+       \rho_t (a, (b, c)) & =    \rho_s (\rho_r (a, b), c).
+  \end{align}
+\end{definition}
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s \in \rule (B, C) $
+  and $ t $ be the \textbf{dependent product} of $ s $ and $ r $ (written $ t = s \cdot r $).
+  Then $ t \in \rule (A, B \times C) $, where:
+  \begin{align}
+    \lambda_t (a)         & = \{ (b, c) | b \in \lambda_r (a), c \in \lambda_s (b) \} \\
+       \phi_t (a, (b, c)) & =    \phi_r (a, \phi_s (b, c)) \\
+       \rho_t (a, (b, c)) & =    \rho_r (a, \rho_s (b, b)).
+  \end{align}
+\end{definition}
+
+\begin{definition}
+  Let $ r \in \rule (B, B) $
+  and $ s \in \rule (A, B) $
+  and $ t \in \rule (A, C) $
+  and $ v $ be $ r $ \textbf{patterned} from $ s $ to $ t $ (written $ v = r \rvert_{s}^{t} $).
+  Then, $ v \in \rule (A, B) $, where:
+  \begin{align}
+      \nu_v (b)    & = \begin{cases}
+                         \{ b \}                                            & \lambda_t (b) \neq \varnothing \\
+                         \{ b \} \cup (\widehat{\nu}_v \circ \lambda_r (x)) & \lambda_t (b) =    \varnothing
+                       \end{cases} \\
+  \lambda_v (a)    & = \widehat{\nu}_v \circ \lambda_s (a) \\
+     \phi_v (a, b) & = \phi_s (a, \phi_r (b, b)) \\
+     \rho_v (a, b) & = \rho_s (a, \rho_r (b, b)) 
+  \end{align}
+\end{definition}
+
+\subsection{Properties of rules}
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $. $ r $ is \textbf{repeatable} iff $ A \supseteq B $.
+\end{definition}
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $. $ r $ is \textbf{passive} iff $ \phi_r (a, b) = a $ for all $ a \in A$.
+\end{definition}
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s \in \rule (A, C) $.
+  $r$ and $s$ are \textbf{independent} ($ r \perp s $) iff,
+  for all ($ a \in A $, $ b \in B $, $ c \in C $),
+  $ \phi_r (\phi_s (a, c), b) = \phi_s (\phi_r (a, b), c) $. 
+\end{definition}
+
+\section{Evaluators}
+
+\section{Conclusion}
+
+\end{document}
