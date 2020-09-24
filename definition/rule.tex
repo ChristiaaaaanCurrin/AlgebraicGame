@@ -54,42 +54,64 @@ The requirements of these three functions gives the following definition for a r
 \end{definition}
 
 For the rule-of-play, $ r $, of a game,
-the set of all well-formed states, $ S $, forms an input set for $ r $
-and the set of all well-formed moves, $ M $, forms an output set for $ r $,
+the set of all well-formed states, $ S $, forms the input set (above denoted as $ A $) for $ r $
+and the set of all well-formed moves, $ M $, forms the output set (above denoted as $ B $) for $ r $,
 so $ r \in \rule (S, M) $.
 However, not all rules have the set of well-formed states as their input set.
+In fact, most do not.
+For most rules the input set is the state with some data added or removed based on related moves.
 Take, for example, the rule for capturing in chess.
 In most cases, captures are performed by moving one piece onto a square occupied by another piece
-(the notable exception to this rule is en-passant capturing)
+(the notable exception to this is en-passant capturing)
 Thus, the legal captures are dependent, not only on the state (i.e. where all the pieces are located),
 but also on the move being made, a piece only captures on the square that it moves to.
+
 It is \emph{possible} to define a function that finds all legal captures
 and a second function that finds all legal moves that are not captures,
-but this approach sacrifices the modularity of
-having one rule that is responsible for the \emph{movement} of pieces
+but this approach sacrifices the flexibility afforded by having
+one rule that is responsible for the \emph{movement} of pieces
 and having another rule that is responsible for the conditions under which pieces are \emph{captured}.
-For chess captures, then, the input set is the cartesian product of the set of all well-formed states
-and the set of all piece moves.
+In the latter case, the idea of capturing on the square to which you move is separated from the idea of moving in certain ways.
+That way chess movement patterns can be applied to games without capturing or with different systems for capturing
+and the same capturing rule applies to all of the pieces in chess (except for pawns).
 
-\subsection{Operations on Rules}
+\subsection{Properties of rules}
+
+In order to discuss rules,
+it is necessary to establish some vocabulary.
 
 \begin{definition}
-  Let $ r \in \rule (A, B) $
-  and $ s $ be the \textbf{reduction} of $ r $ (written $ s = |r| $).
-  Then $ s \in \rule (A, A) $, where:
-  \begin{align}
-    \lambda_s (a)    & = \begin{cases}
-                           \varnothing & \lambda_r (a) = \varnothing \\
-                           \{ a \}     & \lambda_r (a) \neq \varnothing
-                         \end{cases} \\
-       \phi_s (a, b) & = a \\
-       \rho_s (a, b) & = a.
-  \end{align}
+  Let $ r \in \rule (A, B) $. $ r $ is \textbf{repeatable} iff $ A \supseteq B $.
 \end{definition}
 
 \begin{definition}
-  Let $ r \in \rule (A, A) $
-  and $ s $ be the \textbf{negation} of $ r $ (written $ s = \overline{r} $).
+  Let $ r \in \rule (A, B) $. $ r $ is \textbf{passive} iff $ \phi_r (a, b) = a $ for all $ a \in A$.
+\end{definition}
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s \in \rule (A, C) $.
+  $r$ and $s$ are \textbf{independent} ($ r \perp s $) iff,
+  for all ($ a \in A $, $ b \in B $, $ c \in C $),
+  $ \phi_r (\phi_s (a, c), b) = \phi_s (\phi_r (a, b), c) $. 
+\end{definition}
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $ and $ s \in rule (B, C) $. Then $ r $ is \textbf{dependable} to $ s $.
+\end{definition}
+
+\subsection{Operations on Rules}
+
+While the rule-of-play for a game can be created using a single rule
+that handles all off the intricacies of the game,
+The advantage offered by the rule structure
+is the ability to combine simpler rules,
+each of which control only a small part of the game.
+Simple rules can be combined into more complex ones using the following operations.
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s $ be the \textbf{complement} of $ r $ (written $ s = \overline{r} $).
   Then $ s \in \rule (A, A) $, where:
   \begin{align}
     \lambda_s (a)    & = \begin{cases}
@@ -98,6 +120,20 @@ and the set of all piece moves.
                          \end{cases} \\
        \phi_s (a, b) & = \phi_r (a, b) \\
        \rho_s (a, b) & = \rho_r (a, b).
+  \end{align}
+\end{definition}
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s $ be the \textbf{reduction} of $ r $ (written $ s = \overline{\overline{r}} $).
+  Then $ s \in \rule (A, A) $, where:
+  \begin{align}
+    \lambda_s (a)    & = \begin{cases}
+                           \varnothing & \lambda_r (a) = \varnothing \\
+                           \{ a \}     & \lambda_r (a) \neq \varnothing
+                         \end{cases} \\
+       \phi_s (a, b) & = a \\
+       \rho_s (a, b) & = a.
   \end{align}
 \end{definition}
 
@@ -145,7 +181,7 @@ and the set of all piece moves.
   \begin{align}
     \lambda_t (a)         & = \{ (b, c) | b \in \lambda_r (a), c \in \lambda_s (b) \} \\
        \phi_t (a, (b, c)) & =    \phi_r (a, \phi_s (b, c)) \\
-       \rho_t (a, (b, c)) & =    \rho_r (a, \rho_s (b, b)).
+       \rho_t (a, (b, c)) & =    \rho_r (a, \rho_s (b, c)).
   \end{align}
 \end{definition}
 
@@ -156,33 +192,17 @@ and the set of all piece moves.
   and $ v $ be $ r $ \textbf{patterned} from $ s $ to $ t $ (written $ v = r \rvert_{s}^{t} $).
   Then, $ v \in \rule (A, B) $, where:
   \begin{align}
-      \nu_v (b)    & = \begin{cases}
+      \kappa_v (b) & = \begin{cases}
                          \{ b \}                                            & \lambda_t (b) \neq \varnothing \\
-                         \{ b \} \cup (\widehat{\nu}_v \circ \lambda_r (x)) & \lambda_t (b) =    \varnothing
+                         \{ b \} \cup (\widehat{\kappa}_v \circ \lambda_r (x)) & \lambda_t (b) =    \varnothing
                        \end{cases} \\
-  \lambda_v (a)    & = \widehat{\nu}_v \circ \lambda_s (a) \\
+  \lambda_v (a)    & = \widehat{\kappa}_v \circ \lambda_s (a) \\
      \phi_v (a, b) & = \phi_s (a, \phi_r (b, b)) \\
      \rho_v (a, b) & = \rho_s (a, \rho_r (b, b)) 
   \end{align}
 \end{definition}
 
-\subsection{Properties of rules}
-
-\begin{definition}
-  Let $ r \in \rule (A, B) $. $ r $ is \textbf{repeatable} iff $ A \supseteq B $.
-\end{definition}
-
-\begin{definition}
-  Let $ r \in \rule (A, B) $. $ r $ is \textbf{passive} iff $ \phi_r (a, b) = a $ for all $ a \in A$.
-\end{definition}
-
-\begin{definition}
-  Let $ r \in \rule (A, B) $
-  and $ s \in \rule (A, C) $.
-  $r$ and $s$ are \textbf{independent} ($ r \perp s $) iff,
-  for all ($ a \in A $, $ b \in B $, $ c \in C $),
-  $ \phi_r (\phi_s (a, c), b) = \phi_s (\phi_r (a, b), c) $. 
-\end{definition}
+\subsection{Elementary Rules}
 
 \section{Evaluators}
 
