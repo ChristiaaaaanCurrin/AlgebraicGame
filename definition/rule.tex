@@ -2,7 +2,7 @@
 
 \usepackage{tikz}
 \usepackage{amsmath}
-\usepackage[margin=0.75in]{geometry}
+\usepackage{geometry}
 \usepackage{amssymb}
 \usepackage{amsthm} 
 
@@ -21,18 +21,17 @@
 
 \maketitle
 
-
 \section{Introduction}
  
 \section{Games}
 
 \section{Rules}
 
-\subsection{Motivation and Definition}
+\subsection{Motivation and Definition} % SUBSECTION
 
 The purpose of a rule is to define legal transitions between states in a game.
-It may be tempting to define a rule as a function from one state to another state, but this approach is very limited.
-It does not help to describe the moves themselves, only the consequences of those moves.
+It may be tempting to define a rule as a function from one state to another state, but this approach is very limited,
+as it does not help to describe the moves themselves, only the consequences of those moves.
 The definition of a rule must include
 the definition of a function $ \lambda $ that generates the legal moves from a given state
 and the definition of a function $ \phi $ that executes a given move on a given state.
@@ -50,7 +49,8 @@ The requirements of these three functions gives the following definition for a r
   $    \phi_r : A \times B \rightarrow A $,
   $    \rho_r : A \times B \rightarrow A $,
   such that $ \phi_r (\rho_r (a, b), b) = a $
-  and $ \rho_r (\phi_r (a, b), b) = a $.
+  and $ \rho_r (\phi_r (a, b), b) = a $,
+  for all $ a \in A $, $ b \in B $.
 \end{definition}
 
 For the rule-of-play, $ r $, of a game,
@@ -75,32 +75,50 @@ In the latter case, the idea of capturing on the square to which you move is sep
 That way chess movement patterns can be applied to games without capturing or with different systems for capturing
 and the same capturing rule applies to all of the pieces in chess (except for pawns).
 
-\subsection{Properties of rules}
+\subsection{Properties of rules} % SUBSECTION
 
 In order to discuss rules,
 it is necessary to establish some vocabulary.
 
-\begin{definition}
+\begin{definition} 
   Let $ r \in \rule (A, B) $. $ r $ is \textbf{repeatable} iff $ A \supseteq B $.
 \end{definition}
 
 \begin{definition}
-  Let $ r \in \rule (A, B) $. $ r $ is \textbf{passive} iff $ \phi_r (a, b) = a $ for all $ a \in A$.
+  Let $ r \in \rule (A, A) $. $ r $ is \textbf{constant} iff $ \lambda_r (a) = \{ a \} $ for all $ a \in A $.
 \end{definition}
+
+Constant rules are rules that do not present the player with any choice as to how the rule is applied.
+Thus, the legal moves from a constant rule on any given input is the singleton set containing only that input.
+Notice that all constant rules are also repeatable.
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $. $ r $ is \textbf{passive} iff $ \phi_r (a, b) = a $ for all $ a \in A $, $ b \in B $.
+\end{definition}
+
+\begin{definition}
+  Let $ r \in \rule (A, A) $. $ r $ is \textbf{simple} iff $ \phi_r (a_1, a_2) = a_2 $ for all $ a_1, a_2 \in A $.
+\end{definition}
+
+Notice that all simple rules are also repeatable.
 
 \begin{definition}
   Let $ r \in \rule (A, B) $
   and $ s \in \rule (A, C) $.
   $r$ and $s$ are \textbf{independent} ($ r \perp s $) iff,
-  for all ($ a \in A $, $ b \in B $, $ c \in C $),
-  $ \phi_r (\phi_s (a, c), b) = \phi_s (\phi_r (a, b), c) $. 
+  $ \phi_r (\phi_s (a, c), b) = \phi_s (\phi_r (a, b), c) $, 
+  for all $ a \in A $, $ b \in B $, $ c \in C $.
 \end{definition}
 
 \begin{definition}
-  Let $ r \in \rule (A, B) $ and $ s \in rule (B, C) $. Then $ r $ is \textbf{dependable} to $ s $.
+  Let $ r \in \rule (A, B) $ and $ s \in \rule (B, C) $.
+  Then $ r $ is \textbf{precedes} $ s $
+  ($ r \prec s $)
+  and $ s $ \textbf{succeeds} $ r $
+  ($ s \succ r $).
 \end{definition}
 
-\subsection{Operations on Rules}
+\subsection{Operations on Rules} % SUBSECTION
 
 While the rule-of-play for a game can be created using a single rule
 that handles all off the intricacies of the game,
@@ -111,60 +129,80 @@ Simple rules can be combined into more complex ones using the following operatio
 
 \begin{definition}
   Let $ r \in \rule (A, B) $
-  and $ s $ be the \textbf{complement} of $ r $ (written $ s = \overline{r} $).
+  and $ s $ be the \textbf{complement} of $ r $
+  (written $ s = \overline{r} $).
   Then $ s \in \rule (A, A) $, where:
   \begin{align}
     \lambda_s (a)    & = \begin{cases}
                            \varnothing & \lambda_r (a) \neq \varnothing \\
                            \{ a \}     & \lambda_r (a) = \varnothing
                          \end{cases} \\
-       \phi_s (a, b) & = \phi_r (a, b) \\
-       \rho_s (a, b) & = \rho_r (a, b).
+       \phi_s (a_1, a_2) & = a_2 \\
+       \rho_s (a_1, a_2) & = a_2.
   \end{align}
 \end{definition}
 
 \begin{definition}
   Let $ r \in \rule (A, B) $
-  and $ s $ be the \textbf{reduction} of $ r $ (written $ s = \overline{\overline{r}} $).
+  and $ s $ be the \textbf{reduction} of $ r $
+  (written $ s = \overline{\overline{r}} $).
   Then $ s \in \rule (A, A) $, where:
   \begin{align}
     \lambda_s (a)    & = \begin{cases}
                            \varnothing & \lambda_r (a) = \varnothing \\
                            \{ a \}     & \lambda_r (a) \neq \varnothing
                          \end{cases} \\
-       \phi_s (a, b) & = a \\
-       \rho_s (a, b) & = a.
+       \phi_s (a_1, a_2) & = a_2 \\
+       \rho_s (a_1, b_2) & = a_2.
   \end{align}
 \end{definition}
 
+Notice that the reduction of $ r $ is equivalent to the complement of the complement of $ r $
+and that both the reduction of $ r $ and the complement of $ r $ are both simple and constant for any $ r \in \rule (A, B) $.
+
 \begin{definition}
   Let $ r \in \rule (A, B) $
-  and $ s \in \rule (A, B) $
-  and $ t $ be the \textbf{union} of $ s $ and $ r $ (written $ t = s \cup r $).
-  Then $ t \in \rule (A, B) $, where:
+  and $ s \in \rule (A, C) $
+  and $ \phi_s (a, b) = \phi_r (a, b) $
+  for all $ a \in A, b \in B \cap C $
+  and $ t $ be the \textbf{union} of $ s $ and $ r $
+  (written $ t = s \cup r $).
+  Then $ t \in \rule (A, B \cup C) $, where:
   \begin{align}
     \lambda_t (a)    & = \lambda_r (a) \cup \lambda_s (a) \\
-       \phi_t (a, b) & =    \phi_s (a, b) \\
-       \rho_t (a, b) & =    \rho_s (a, b).
-  \end{align}
-\end{definition}
-
-\begin{definition}
-  Let $ r \in \rule (A, B) $
-  and $ s \in \rule (A, B) $
-  and $ t $ be the \textbf{intersection} of $ s $ and $ r $ (written $ t = s \cap r $).
-  Then $ t \in \rule (A, B) $, where:
-  \begin{align}
-    \lambda_t (a)    & = \lambda_r (a) \cap \lambda_s (a) \\
-       \phi_t (a, b) & = \phi_r (a, b) \\
-       \rho_t (a, b) & = \rho_r (a, b).
+       \phi_t (a, b) & = \begin {cases}
+                           \phi_s (a, b)                 & b \in C \setminus B \\
+                           \phi_r (a, b)                 & b \in B \setminus C \\
+                           \phi_s (a, b) = \phi_r (a, b) & b \in B \cap C
+                         \end{cases} \\
+        \rho_t (a, b) & = \begin {cases}
+                           \rho_s (a, b)                 & b \in C \setminus B \\
+                           \rho_r (a, b)                 & b \in B \setminus C \\
+                           \rho_s (a, b) = \rho_r (a, b) & b \in B \cap C
+                         \end{cases}. 
   \end{align}
 \end{definition}
 
 \begin{definition}
   Let $ r \in \rule (A, B) $
   and $ s \in \rule (A, C) $
-  and $ t $ be the \textbf{independent product} of $ s $ and $ r $ (written $ t = s \times r $).
+  and $ \phi_s (a, b) = \phi_r (a, b) $
+  for all $ a \in A, b \in B \cap C $
+  and $ t $ be the \textbf{intersection} of $ s $ and $ r $
+  (written $ t = s \cap r $).
+  Then $ t \in \rule (A, B \cap C) $, where:
+  \begin{align}
+    \lambda_t (a)    & = \lambda_r (a) \cap \lambda_s (a) \\
+       \phi_t (a, b) & = \phi_s (a, b) = \phi_r (a, b) \\
+       \rho_t (a, b) & = \rho_s (a, b) = \rho_r (a, b).
+  \end{align}
+\end{definition}
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s \in \rule (A, C) $
+  and $ t $ be the \textbf{independent product} of $ s $ and $ r $
+  (written $ t = s \times r $).
   Then $ t \in \rule (A, B \times C) $, where:
   \begin{align}
     \lambda_t (a)         & = \lambda_r (a) \times \lambda_s (a) \\
@@ -176,7 +214,8 @@ Simple rules can be combined into more complex ones using the following operatio
 \begin{definition}
   Let $ r \in \rule (A, B) $
   and $ s \in \rule (B, C) $
-  and $ t $ be the \textbf{dependent product} of $ s $ and $ r $ (written $ t = s \cdot r $).
+  and $ t $ be the \textbf{dependent product} of $ s $ and $ r $
+  (written $ t = s \cdot r $).
   Then $ t \in \rule (A, B \times C) $, where:
   \begin{align}
     \lambda_t (a)         & = \{ (b, c) | b \in \lambda_r (a), c \in \lambda_s (b) \} \\
@@ -186,15 +225,29 @@ Simple rules can be combined into more complex ones using the following operatio
 \end{definition}
 
 \begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s \in \rule (C, D) $
+  and $ t $ be the \textbf{full product} of $ s $ and $ r $
+  (written $ t = s \bowtie r $).
+  Then $ t \in \rule (A \times B, C \times D) $, where:
+  \begin{align}
+    \lambda_t ((a, c))         & = \{ (b, d) | b \in \lambda_r (a), d \in \lambda_s (c) \} \\
+       \phi_t ((a, c), (b, d)) & = (\phi_r (a, b), \phi_s (c, d)) \\
+       \rho_t ((a, c), (b, d)) & = (\rho_r (a, b), \rho_s (c, d)).
+  \end{align}
+\end{definition}
+
+\begin{definition}
   Let $ r \in \rule (B, B) $
   and $ s \in \rule (A, B) $
-  and $ t \in \rule (A, C) $
-  and $ v $ be $ r $ \textbf{patterned} from $ s $ to $ t $ (written $ v = r \rvert_{s}^{t} $).
+  and $ t \in \rule (B, C) $
+  and $ v $ be $ r $ \textbf{patterned} from $ s $ to $ t $
+  (written $ v = r \rvert_{s}^{t} $).
   Then, $ v \in \rule (A, B) $, where:
   \begin{align}
       \kappa_v (b) & = \begin{cases}
-                         \{ b \}                                            & \lambda_t (b) \neq \varnothing \\
-                         \{ b \} \cup (\widehat{\kappa}_v \circ \lambda_r (x)) & \lambda_t (b) =    \varnothing
+                         \{ b \}                                               & \lambda_t (b) \neq \varnothing \\
+                         \{ b \} \cup (\widehat{\kappa}_v \circ \lambda_r (b)) & \lambda_t (b) =    \varnothing
                        \end{cases} \\
   \lambda_v (a)    & = \widehat{\kappa}_v \circ \lambda_s (a) \\
      \phi_v (a, b) & = \phi_s (a, \phi_r (b, b)) \\
@@ -202,7 +255,47 @@ Simple rules can be combined into more complex ones using the following operatio
   \end{align}
 \end{definition}
 
-\subsection{Elementary Rules}
+\subsection{Elementary Rules} % SUBSECTION
+
+\begin{definition}
+  Let $ r $ be the \textbf{void rule}
+  (written $ r = \rule_z $).
+  Then $ r \in \rule (A, B) $, where:
+  \begin{align}
+    \lambda_r (a)    & = \varnothing \\
+       \phi_r (a, b) & = a \\
+       \rho_r (a, b) & = a.
+  \end{align}
+\end{definition}
+
+Notice that the void rule is passive and constant.
+
+\begin{definition}
+  Let $ r $ be the \textbf{pass rule}
+  (written $ r = \rule_0 $).
+  Then $ r \in \rule (A, A) $ where:
+  \begin{align}
+    \lambda_r (a)        & = {a} \\
+       \phi_r (a_1, a_2) & =  a_2 \\
+       \rho_r (a_1, a_2) & =  a_2.
+  \end{align}
+\end{definition}
+
+Notice that the pass rule is simple and constant.
+
+\begin{definition}
+  Let $ n \in \mathbb{N} $ such that $ n \neq 0 $).
+  Let $ r $ be the \textbf{extractor} of order $ n $
+  (written $ r = \rule_n $).
+  Then $ \rule_1 \in \rule (A \times B, A) $ where:
+  \begin{align}
+    \lambda_{\rule_1} ((a, b))        & = {a} \\
+       \phi_{\rule_1} ((a_1, b), a_2) & = (a_2, b) \\
+       \rho_{\rule_1} ((a_1, b), a_2) & = (a_2, b)
+  \end{align}
+\end{definition}
+
+Notice that the extractor of any order is constant, but not simple.
 
 \section{Evaluators}
 
