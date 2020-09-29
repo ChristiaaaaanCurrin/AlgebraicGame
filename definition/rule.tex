@@ -96,6 +96,8 @@ Notice that all constant rules are also repeatable.
   Let $ r \in \rule (A, B) $. $ r $ is \textbf{passive} iff $ \phi_r (a, b) = a $ for all $ a \in A $, $ b \in B $.
 \end{definition}
 
+Notice that passive rules are really boring.
+
 \begin{definition}
   Let $ r \in \rule (A, A) $. $ r $ is \textbf{simple} iff $ \phi_r (a_1, a_2) = a_2 $ for all $ a_1, a_2 \in A $.
 \end{definition}
@@ -113,9 +115,7 @@ Notice that all simple rules are also repeatable.
 \begin{definition}
   Let $ r \in \rule (A, B) $ and $ s \in \rule (B, C) $.
   Then $ r $ is \textbf{precedes} $ s $
-  ($ r \prec s $)
   and $ s $ \textbf{succeeds} $ r $
-  ($ s \succ r $).
 \end{definition}
 
 \subsection{Operations on Rules} % SUBSECTION
@@ -144,7 +144,7 @@ Simple rules can be combined into more complex ones using the following operatio
 
 \begin{definition}
   Let $ r \in \rule (A, B) $
-  and $ s $ be the \textbf{reduction} of $ r $
+  and $ s $ be the \textbf{reduction} of $ r $ or $ r $ \textbf{reduced}
   (written $ s = \overline{\overline{r}} $).
   Then $ s \in \rule (A, A) $, where:
   \begin{align}
@@ -259,7 +259,7 @@ and that both the reduction of $ r $ and the complement of $ r $ are both simple
 
 \begin{definition}
   Let $ r $ be the \textbf{void rule}
-  (written $ r = \rule_z $).
+  (written $ r = \rule_\varnothing $).
   Then $ r \in \rule (A, B) $, where:
   \begin{align}
     \lambda_r (a)    & = \varnothing \\
@@ -275,7 +275,7 @@ Notice that the void rule is passive and constant.
   (written $ r = \rule_0 $).
   Then $ r \in \rule (A, A) $ where:
   \begin{align}
-    \lambda_r (a)        & = {a} \\
+    \lambda_r (a)        & = \{ a \} \\
        \phi_r (a_1, a_2) & =  a_2 \\
        \rho_r (a_1, a_2) & =  a_2.
   \end{align}
@@ -284,14 +284,23 @@ Notice that the void rule is passive and constant.
 Notice that the pass rule is simple and constant.
 
 \begin{definition}
-  Let $ n \in \mathbb{N} $ such that $ n \neq 0 $).
+  Let $ n \in \mathbb{N} $.
   Let $ r $ be the \textbf{extractor} of order $ n $
   (written $ r = \rule_n $).
-  Then $ \rule_1 \in \rule (A \times B, A) $ where:
+  Then $ \rule_1 \in \rule (A \times B \times C \times ..., A),
+         \rule_2 \in \rule (A \times B \times C \times ..., B),
+         \rule_3 \in \rule (A \times B \times C \times ..., C) ... $ where:
   \begin{align}
-    \lambda_{\rule_1} ((a, b))        & = {a} \\
-       \phi_{\rule_1} ((a_1, b), a_2) & = (a_2, b) \\
-       \rho_{\rule_1} ((a_1, b), a_2) & = (a_2, b)
+    \lambda_{\rule_1} ((a, b, c, ...))        & = \{ a \} \\
+       \phi_{\rule_1} ((a_1, b, c, ...), a_2) & = (a_2, b, c, ...) \\
+       \rho_{\rule_1} ((a_1, b, c, ...), a_2) & = (a_2, b, c, ...) \\
+    \lambda_{\rule_2} ((a, b, c, ...))        & = \{ b \} \\
+       \phi_{\rule_2} ((a, b_1, c, ...), b_2) & = (a, b_2, c, ...) \\
+       \rho_{\rule_2} ((a, b_1, c, ...), b_2) & = (a, b_2, c, ...) \\
+    \lambda_{\rule_3} ((a, b, c, ...))        & = \{ c \} \\
+       \phi_{\rule_3} ((a, b, c_1, ...), c_2) & = (a, b, c_2, ...) \\
+       \rho_{\rule_3} ((a, b, c_1, ...), c_2) & = (a, b, c_2, ...) \\
+       ... \nonumber
   \end{align}
 \end{definition}
 
