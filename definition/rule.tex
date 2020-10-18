@@ -4,7 +4,8 @@
 \usepackage{amsmath}
 \usepackage{geometry}
 \usepackage{amssymb}
-\usepackage{amsthm} 
+\usepackage{amsthm}
+\usepackage{mathtools}
 
 \title{Generalized Formalization of Games}
 \author{Christiaan van de Sande \and Tanner Reese}
@@ -16,7 +17,7 @@
 \newtheorem{theorem}{Theorem}
 
 \def\rule{\mathcal{R}}
-
+\DeclareMathOperator{\imp}{imp}
 \begin{document}
 
 \maketitle
@@ -50,7 +51,7 @@ The requirements of these three functions gives the following definition for a r
   $    \rho_r : A \times B \rightarrow A $,
   such that $ \phi_r (\rho_r (a, b), b) = a $
   and $ \rho_r (\phi_r (a, b), b) = a $,
-  for all $ a \in A $, $ b \in B $.
+  for all $ a \in A $, $ b \in \lambda_r (a) $.
 \end{definition}
 
 For the rule-of-play, $ r $, of a game,
@@ -80,17 +81,37 @@ and the same capturing rule applies to all of the pieces in chess (except for pa
 In order to discuss rules,
 it is necessary to establish some vocabulary.
 
+\begin{definition}
+  Let $ r \in \rule (A, B) $ and $ s \in \rule (B, C) $.
+  Then $ s $ is \textbf{dependent} on $ r $
+\end{definition}
+
+Dependence is useful for describing which rules can be applied after others.
+For example, chess pieces have one rule that defines how they move,
+and another rule that describes what captures occur given a particular move.
+Thus the capturing rule is dependent on the movement rule,
+because which captures are possible depends on which move is being made.
+
 \begin{definition} 
   Let $ r \in \rule (A, B) $. $ r $ is \textbf{repeatable} iff $ A \supseteq B $.
 \end{definition}
+
+Repeatable rules are rules where the output set is contained in the input set.
+This is means that repeatable rules can be applied again on their own outputs.
+This property is useful for rules that are applied in patterns,
+e.g. the movments of bishops and rooks in chess.
+Notice that repeatable rules both succeed and precede themeselves.
 
 \begin{definition}
   Let $ r \in \rule (A, A) $. $ r $ is \textbf{constant} iff $ \lambda_r (a) = \{ a \} $ for all $ a \in A $.
 \end{definition}
 
 Constant rules are rules that do not present the player with any choice as to how the rule is applied.
-Thus, the legal moves from a constant rule on any given input is the singleton set containing only that input.
+Thus the legal moves from a constant rule on any given input is the singleton set containing only that input.
 Notice that all constant rules are also repeatable.
+One example of a constant rule is the turn mechanic common to most games.
+Regardless of the choices made by the players,
+on every turn, the player whose turn it is changes.
 
 \begin{definition}
   Let $ r \in \rule (A, B) $. $ r $ is \textbf{passive} iff $ \phi_r (a, b) = a $ for all $ a \in A $, $ b \in B $.
@@ -103,6 +124,7 @@ Notice that passive rules are really boring.
 \end{definition}
 
 Notice that all simple rules are also repeatable.
+Simple rules are useful for detecting certain conditions on the board.
 
 \begin{definition}
   Let $ r \in \rule (A, B) $
@@ -112,10 +134,44 @@ Notice that all simple rules are also repeatable.
   for all $ a \in A $, $ b \in B $, $ c \in C $.
 \end{definition}
 
+\subsection{Elementary Rules} % SUBSECTION
+
 \begin{definition}
-  Let $ r \in \rule (A, B) $ and $ s \in \rule (B, C) $.
-  Then $ r $ is \textbf{precedes} $ s $
-  and $ s $ \textbf{succeeds} $ r $
+  Let $ r $ be the \textbf{void rule}
+  (written $ r = \rule_\varnothing $).
+  Then $ r \in \rule (A, B) $, where:
+  \begin{align}
+    \lambda_r (a)    & = \varnothing \\
+       \phi_r (a, b) & = a \\
+       \rho_r (a, b) & = a.
+  \end{align}
+\end{definition}
+
+Notice that the void rule is passive and constant.
+
+\begin{definition}
+  Let $ r $ be the \textbf{pass rule}
+  (written $ r = \rule_0 $).
+  Then $ r \in \rule (A, A) $ where:
+  \begin{align}
+    \lambda_r (a)        & = \{ a \} \\
+       \phi_r (a_1, a_2) & =  a_2 \\
+       \rho_r (a_1, a_2) & =  a_2.
+  \end{align}
+\end{definition}
+
+Notice that the pass rule is simple and constant.
+
+\begin{definition}
+  Let $ f : A -> B $ be a bijection.
+  Let $ r $ be the \textbf{rule form} of $ f $.
+  (written $ r = \rule_f $)
+  Then $ r \in \rule (A, B) $ where:
+  \begin{align}
+    \lambda_r (a)    & = \{ f (a) \} \\
+       \phi_r (a, b) & = f^{-1} (b) \\
+       \rho_r (a, b) & = f^{-1} (b)
+  \end{align}
 \end{definition}
 
 \subsection{Operations on Rules} % SUBSECTION
@@ -125,7 +181,7 @@ that handles all off the intricacies of the game,
 The advantage offered by the rule structure
 is the ability to combine simpler rules,
 each of which control only a small part of the game.
-Simple rules can be combined into more complex ones using the following operations.
+Simple rules can be combined or modified into more complex ones using the following operations.
 
 \begin{definition}
   Let $ r \in \rule (A, B) $
@@ -144,7 +200,7 @@ Simple rules can be combined into more complex ones using the following operatio
 
 \begin{definition}
   Let $ r \in \rule (A, B) $
-  and $ s $ be the \textbf{reduction} of $ r $ or $ r $ \textbf{reduced}
+  and $ s $ be the \textbf{reduction} of $ r $ 
   (written $ s = \overline{\overline{r}} $).
   Then $ s \in \rule (A, A) $, where:
   \begin{align}
@@ -255,56 +311,30 @@ and that both the reduction of $ r $ and the complement of $ r $ are both simple
   \end{align}
 \end{definition}
 
-\subsection{Elementary Rules} % SUBSECTION
-
 \begin{definition}
-  Let $ r $ be the \textbf{void rule}
-  (written $ r = \rule_\varnothing $).
-  Then $ r \in \rule (A, B) $, where:
+  Let $ n, N \in \mathbb{N} $ such that $ 0 < n \leq N $,
+  Let $ A_i = B_i $ for all $ i \neq n $.
+  Then $ \imp_n^N : \rule (A_n, B_n) \rightarrow \rule (\bigtimes_{i=1}^N A_i, \bigtimes_{i=1}^N B_i) $, where:
   \begin{align}
-    \lambda_r (a)    & = \varnothing \\
-       \phi_r (a, b) & = a \\
-       \rho_r (a, b) & = a.
+    \imp_n^N (r) & = \begin{cases}
+                                     r                       & 1 = n = N \\
+                       \imp_n^{N-1} (r)       \times \rule_0 & 1 < n < N \\
+                       \imp_1^{N-1} (\rule_0) \times r       & 1 < n = N
+                     \end{cases}
   \end{align}
 \end{definition}
 
-Notice that the void rule is passive and constant.
-
-\begin{definition}
-  Let $ r $ be the \textbf{pass rule}
-  (written $ r = \rule_0 $).
-  Then $ r \in \rule (A, A) $ where:
-  \begin{align}
-    \lambda_r (a)        & = \{ a \} \\
-       \phi_r (a_1, a_2) & =  a_2 \\
-       \rho_r (a_1, a_2) & =  a_2.
-  \end{align}
-\end{definition}
-
-Notice that the pass rule is simple and constant.
-
-\begin{definition}
-  Let $ n \in \mathbb{N} $.
-  Let $ r $ be the \textbf{extractor} of order $ n $
-  (written $ r = \rule_n $).
-  Then $ \rule_1 \in \rule (A \times B \times C \times ..., A),
-         \rule_2 \in \rule (A \times B \times C \times ..., B),
-         \rule_3 \in \rule (A \times B \times C \times ..., C) ... $ where:
-  \begin{align}
-    \lambda_{\rule_1} ((a, b, c, ...))        & = \{ a \} \\
-       \phi_{\rule_1} ((a_1, b, c, ...), a_2) & = (a_2, b, c, ...) \\
-       \rho_{\rule_1} ((a_1, b, c, ...), a_2) & = (a_2, b, c, ...) \\
-    \lambda_{\rule_2} ((a, b, c, ...))        & = \{ b \} \\
-       \phi_{\rule_2} ((a, b_1, c, ...), b_2) & = (a, b_2, c, ...) \\
-       \rho_{\rule_2} ((a, b_1, c, ...), b_2) & = (a, b_2, c, ...) \\
-    \lambda_{\rule_3} ((a, b, c, ...))        & = \{ c \} \\
-       \phi_{\rule_3} ((a, b, c_1, ...), c_2) & = (a, b, c_2, ...) \\
-       \rho_{\rule_3} ((a, b, c_1, ...), c_2) & = (a, b, c_2, ...) \\
-       ... \nonumber
-  \end{align}
-\end{definition}
-
-Notice that the extractor of any order is constant, but not simple.
+Example:
+Let $ r \in \rule (C, C') $.
+\begin{align}
+  \imp_3^5 (r) & = \imp_3^4 (r) \times \rule_0 \\
+               & = \imp_3^3 (r) \times \rule_0 \times \rule_0 \\
+               & = \imp_1^2 (\rule_0) \times r \times \rule_0 \times \rule_0 \\
+               & = \imp_1^1 (\rule_0) \times \rule_0 \times r \times \rule_0 \times \rule_0 \\
+               & = \rule_0 \times \rule_0 \times r \times \rule_0 \times \rule_0
+               \in \rule (A \times B \times C \times D \times E,
+               A \times B \times C' \times D \times E)
+\end{align}
 
 \section{Evaluators}
 
