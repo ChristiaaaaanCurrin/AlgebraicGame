@@ -36,7 +36,7 @@ independentProduct s r = R {lambda = (\x -> [(yr, ys) | yr <- lambda r x, ys <- 
 dependentProduct :: Rule b c -> Rule a b -> Rule a (b, c)
 dependentProduct s r = R {lambda = (\x -> [(y, z) | y <- lambda r x, z <- lambda s y]),
                           phi    = (\x (y, z) -> phi r x $ phi s y z),
-                          rho    = (\x (y, z) -> rho r x $ rho s y z)}
+                          rho    = (\x (y, z) -> phi r x $ rho s y z)}
 
 fullProduct :: Rule c d -> Rule a b -> Rule (a, c) (b, d)
 fullProduct s r = R {lambda = (\(a, c) -> [(b, d) | b <- lambda r a, d <- lambda s c]),
@@ -58,17 +58,6 @@ voidRule = R {lambda = const [], phi = const, rho = const}
 
 passRule :: Rule a a
 passRule = R {lambda = pure, phi = const, rho = const}
-
-ext1of2 :: Rule (a, b) a
-ext1of2 = R {lambda = (\(x, y) -> [x]), phi = (\(x1, y) x2 -> (x2, y)), rho = (\(x1, y) x2 -> (x2, y))} 
-ext2of2 :: Rule (a, b) b
-ext2of2 = R {lambda = (\(x, y) -> [y]), phi = (\(x, y1) y2 -> (x, y2)), rho = (\(x, y1) y2 -> (x, y2))}
-ext1of3 :: Rule (a, b, c) a
-ext1of3 = R {lambda = (\(x, y, z) -> [x]), phi = (\(x1, y, z) x2 -> (x2, y, z)), rho = (\(x1, y, z) x2 -> (x2, y, z))}
-ext2of3 :: Rule (a, b, c) b
-ext2of3 = R {lambda = (\(x, y, z) -> [y]), phi = (\(x, y1, z) y2 -> (x, y2, z)), rho = (\(x, y1, z) y2 -> (x, y2, z))}
-ext3of3 :: Rule (a, b, c) c
-ext3of3 = R {lambda = (\(x, y, z) -> [z]), phi = (\(x, y, z1) z2 -> (x, y, z2)), rho = (\(x, y, z1) z2 -> (x, y, z2))}
 
 (/-) = complement
 (/+) = reduction
