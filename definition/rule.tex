@@ -276,7 +276,20 @@ and that both the reduction of $ r $ and the complement of $ r $ are both simple
   \begin{align}
     \lambda_t (a)         & = \{ (b, c) | b \in \lambda_r (a), c \in \lambda_s (b) \} \\
        \phi_t (a, (b, c)) & =    \phi_r (a, \phi_s (b, c)) \\
-       \rho_t (a, (b, c)) & =    \rho_r (a, \rho_s (b, c)).
+       \rho_t (a, (b, c)) & =    \rho_r (a, \phi_s (b, c)).
+  \end{align}
+\end{definition}
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $
+  and $ s \in \rule (A \times B, C) $
+  and $ t $ be the \textbf{dependent product} of $ s $ and $ r $
+  (written $ t = s \circ r $).
+  Then $ t \in \rule (A, B \times C) $, where:
+  \begin{align}
+    \lambda_t (a)         & = \{ (b, c) | b \in \lambda_r (a), c \in \lambda_s ((a, b)) \} \\
+       \phi_t (a, (b, c)) & =    \phi_r (\phi_s ((a, b), c)) \\
+       \rho_t (a, (b, c)) & =    \rho_r (\rho_s ((a, b), c)).
   \end{align}
 \end{definition}
 
