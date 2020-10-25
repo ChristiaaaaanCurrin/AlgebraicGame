@@ -36,7 +36,10 @@ independentProduct s r = R {lambda = (\x -> [(yr, ys) | yr <- lambda r x, ys <- 
 dependentProduct :: Rule b c -> Rule a b -> Rule a (b, c)
 dependentProduct s r = R {lambda = (\x -> [(y, z) | y <- lambda r x, z <- lambda s y]),
                           phi    = (\x (y, z) -> phi r x $ phi s y z),
-                          rho    = (\x (y, z) -> phi r x $ rho s y z)}
+                          rho    = (\x (y, z) -> rho r x $ phi s y z)}
+
+                          --rho    = (\(y, z) -> rho r $ phi s z y )}
+                          --rho    = rho r . (uncurry $ phi s)
 
 fullProduct :: Rule c d -> Rule a b -> Rule (a, c) (b, d)
 fullProduct s r = R {lambda = (\(a, c) -> [(b, d) | b <- lambda r a, d <- lambda s c]),
