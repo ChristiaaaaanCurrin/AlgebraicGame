@@ -18,12 +18,32 @@
 
 \def\rule{\mathcal{R}}
 \DeclareMathOperator{\imp}{imp}
+\DeclareMathOperator{\rpass}{rpass}
+\DeclareMathOperator{\rcons}{rcons}
+
+\newcommand{\depp}{\mathbin{\: \, \mathclap{\tikz{
+  \draw (-.20em, -.20em) -- (.20em, .20em);
+  \draw (-.20em,  .20em) -- (.20em, .20em);
+  \draw ( .20em, -.20em) -- (.20em, .20em);
+}}\: \,}}
+ 
+\newcommand{\indp}{\mathbin{\: \,\mathclap{\tikz{
+  \draw (0, 0) -- (0, -.25em);
+  \draw (0, 0) -- (-.25em, .25em);
+  \draw (0, 0) -- (.25em, .25em);
+}}\: \,}}
+
+\newcommand{\gate}{\mathopen{\; \mathclap{\tikz{
+  \draw (0, -0.35em) -- (0, 0.30em);
+  \draw (0,  0.30em) -- (0.30em, 0.50em);
+}}\; \!}}
+
 \begin{document}
 
 \maketitle
 
 \section{Introduction}
- 
+
 \section{Games}
 
 \section{Rules}
@@ -31,8 +51,10 @@
 \subsection{Motivation and Definition} % SUBSECTION
 
 The purpose of a rule is to define legal transitions between states in a game.
-It may be tempting to define a rule as a function from one state to another state, but this approach is very limited,
-as it does not help to describe the moves themselves, only the consequences of those moves.
+It may be tempting to define a rule as a function from one state to another state,
+but this approach is very limited,
+as it does not help to describe the moves themselves,
+only the consequences of those moves.
 The definition of a rule must include
 the definition of a function $ \lambda $ that generates the legal moves from a given state
 and the definition of a function $ \phi $ that executes a given move on a given state.
@@ -46,9 +68,9 @@ The requirements of these three functions gives the following definition for a r
 
  \begin{definition}
   $ r $ is a \textbf{rule} on sets $ A $ and $ B $ (written  $ r \in \rule (A, B) $) iff
-  $ \lambda_r : A          \mapsto \mathcal{P} (B) $,
-  $    \phi_r : A \times B \mapsto A $,
-  $    \rho_r : A \times B \mapsto A $,
+  $ \lambda_r : A          \rightarrow \mathcal{P} (B) $,
+  $    \phi_r : A \times B \rightarrow A $,
+  $    \rho_r : A \times B \rightarrow A $,
   such that $ \phi_r (\rho_r (a, b), b) = a $
   and $ \rho_r (\phi_r (a, b), b) = a $,
   for all $ a \in A $, $ b \in \lambda_r (a) $.
@@ -103,7 +125,9 @@ e.g. the movments of bishops and rooks in chess.
 Notice that repeatable rules both succeed and precede themeselves.
 
 \begin{definition}
-  Let $ r \in \rule (A, A) $. $ r $ is \textbf{constant} iff $ \lambda_r (a) = \{ a \} $ for all $ a \in A $.
+  Let $ r \in \rule (A, A) $. $ r $ is \textbf{constant}
+  (written $ r \in \rule_c (A, A) $)
+  iff $ \lambda_r (a) = \{ a \} $ for all $ a \in A $.
 \end{definition}
 
 Constant rules are rules that do not present the player with any choice as to how the rule is applied.
@@ -114,63 +138,61 @@ Regardless of the choices made by the players,
 on every turn, the player whose turn it is changes.
 
 \begin{definition}
-  Let $ r \in \rule (A, B) $. $ r $ is \textbf{passive} iff $ \phi_r (a, b) = a $ for all $ a \in A $, $ b \in B $.
+  Let $ r \in \rule (A, B) $. $ r $ is \textbf{passive}
+  (written $ r \in \rule_p (A, B) $)
+  iff $ \phi_r (a, b) = a $ for all $ a \in A $, $ b \in \lambda_r (a) $.
 \end{definition}
 
-Notice that passive rules are really boring.
-
-\begin{definition}
-  Let $ r \in \rule (A, A) $. $ r $ is \textbf{simple} iff $ \phi_r (a_1, a_2) = a_2 $ for all $ a_1, a_2 \in A $.
-\end{definition}
-
-Notice that all simple rules are also repeatable.
-Simple rules are useful for detecting certain conditions on the board.
+Notice that passive rules are not capable of altering the state of the game,
+only of translating it for use by other rules.
 
 \begin{definition}
   Let $ r \in \rule (A, B) $
   and $ s \in \rule (A, C) $.
-  $r$ and $s$ are \textbf{independent} ($ r \perp s $) iff,
-  $ \phi_r (\phi_s (a, c), b) = \phi_s (\phi_r (a, b), c) $, 
+  $ r $ and $ s $ are \textbf{independent}
+  (written $ r \perp s $)
+  iff $ \phi_r (\phi_s (a, c), b) = \phi_s (\phi_r (a, b), c) $, 
   for all $ a \in A $, $ b \in B $, $ c \in C $.
 \end{definition}
 
 \subsection{Elementary Rules} % SUBSECTION
 
 \begin{definition}
-  Let $ r $ be the \textbf{void rule}
-  (written $ r = \rule_\varnothing $).
-  Then $ r \in \rule (A, B) $, where:
-  \begin{align}
-    \lambda_r (a)    & = \varnothing \\
-       \phi_r (a, b) & = a \\
-       \rho_r (a, b) & = a.
-  \end{align}
-\end{definition}
-
-Notice that the void rule is passive and constant.
-
-\begin{definition}
-  Let $ r $ be the \textbf{pass rule}
-  (written $ r = \rule_0 $).
-  Then $ r \in \rule (A, A) $ where:
-  \begin{align}
-    \lambda_r (a)        & = \{ a \} \\
-       \phi_r (a_1, a_2) & =  a_2 \\
-       \rho_r (a_1, a_2) & =  a_2.
-  \end{align}
-\end{definition}
-
-Notice that the pass rule is simple and constant.
-
-\begin{definition}
-  Let $ f : A \mapsto B $ be a bijection.
-  Let $ r $ be the \textbf{rule form} of $ f $
-  (written $ r = \rule_f $).
+  Let $ f : A \rightarrow B $ be a bijection.
+  Let $ r $ be the \textbf{passive form} of $ f $
+  (written $ r = \rule_p^f $).
   Then $ r \in \rule (A, B) $ where:
   \begin{align}
     \lambda_r (a)    & = \{ f (a) \} \\
        \phi_r (a, b) & = f^{-1} (b) \\
        \rho_r (a, b) & = f^{-1} (b).
+  \end{align}
+\end{definition}
+
+\begin{definition}
+  Let $ f : A \rightarrow A $ be a bijection.
+  Let $ r $ be the \textbf{constant form} of $ f $
+  (written $ r = \rule_c^f $).
+  Then $ r \in \rule (A, A) $ where:
+  \begin{align}
+    \lambda_r (a)        & = \{ a \} \\
+       \phi_r (a_1, a_2) & = f (a_2) \\
+       \rho_r (a_1, a_2) & = f^{-1} (a_2) \\
+  \end{align}
+\end{definition}
+
+\begin{definition}
+  Let $ f : A \rightarrow B $ where $ b \subseteq \mathbb{R} $.
+  Let $ r $ be the \textbf{gate form} of $ f $
+  (written $ r \in \rule_g^f $).
+  Then $ r \in \rule (A, A) $ where:
+  \begin{align}
+    \lambda_r (a)    & = \begin{cases}
+                           \{ a \}     & f (a) \neq 0 \\
+                           \varnothing & f (a) =    0 \\
+                         \end{cases} \\
+       \phi_r (a, b) & = a \\
+       \rho_r (a, b) & = a
   \end{align}
 \end{definition}
 
@@ -182,6 +204,23 @@ The advantage offered by the rule structure
 is the ability to combine simpler rules,
 each of which control only a small part of the game.
 Simple rules can be combined or modified into more complex ones using the following operations.
+
+\begin{definition}
+  Let $ g \in \rule (A, C) $ and
+  let $ r \in \rule (A, B) $ and
+  let $ t $ be $ r $ \textbf{gated} by $ g $
+  or $ g $ \textbf{gate} $ r $.
+  (written $ t = g \gate r $).
+  Then $ t \in \rule (A, B) $ where:
+  \begin{align}
+    \lambda_t (a) & = \begin{cases}
+                         \lambda_r (a) & \lambda_g (a) \neq \varnothing \\
+                         \varnothing & \lambda_g (a) = \varnothing
+                      \end{cases} \\
+    \phi_t (a, b) & = \phi_r (a, b) \\
+    \rho_t (a, b) & = \rho_r (a, b)
+  \end{align}
+\end{definition}
 
 \begin{definition}
   Let $ r \in \rule (A, B) $
@@ -218,10 +257,23 @@ and that both the reduction of $ r $ and the complement of $ r $ are both simple
 
 \begin{definition}
   Let $ r \in \rule (A, B) $
+  and $ s $ be $ r $ \textbf{lifted}
+  or \textbf{lift} $ r $
+  (written $ s = \widehat{r} $).
+  Then $ s \in \rule (\mathcal{P} (A), A \times B) $ where:
+  \begin{align}
+    \lambda_s (A)         & = \{(a, b) ~|~ a \in A, b \in \lambda_r (a) \} \\
+       \phi_s (A, (a, b)) & = (A \setminus \{ a \} ) \cup \{ \phi_r (a, b) \} \\
+       \rho_s (A, (a, b)) & = (A \setminus \{ a \} ) \cup \{ \rho_r (a, b) \} \\
+  \end{align}
+\end{definition}
+
+\begin{definition}
+  Let $ r \in \rule (A, B) $
   and $ s \in \rule (A, C) $
   and $ \phi_s (a, b) = \phi_r (a, b) $
   for all $ a \in A, b \in B \cap C $
-  and $ t $ be the \textbf{sum} of $ s $ and $ r $
+  and $ t $ be the \textbf{sum} or \textbf{union} of $ s $ and $ r $
   (written $ t = s + r $).
   Then $ t \in \rule (A, B \cup C) $, where:
   \begin{align}
@@ -244,8 +296,8 @@ and that both the reduction of $ r $ and the complement of $ r $ are both simple
   and $ s \in \rule (A, C) $
   and $ \phi_s (a, b) = \phi_r (a, b) $
   for all $ a \in A, b \in B \cap C $
-  and $ t $ be the \textbf{intersection} of $ s $ and $ r $
-  (written $ t = s \wedge r $).
+  and $ t $ be the \textbf{small product} or \textbf{intersection} of $ s $ and $ r $
+  (written $ t = s \cdot r $).
   Then $ t \in \rule (A, B \cap C) $, where:
   \begin{align}
     \lambda_t (a)    & = \lambda_r (a) \cap \lambda_s (a) \\
@@ -257,8 +309,8 @@ and that both the reduction of $ r $ and the complement of $ r $ are both simple
 \begin{definition}
   Let $ r \in \rule (A, B) $
   and $ s \in \rule (A, C) $
-  and $ t $ be the \textbf{independent product} of $ s $ and $ r $
-  (written $ t = s \cdot r $).
+  and $ t $ be the \textbf{independent product} or \textbf{fork product} of $ s $ and $ r $
+  (written $ t = s \indp r $).
   Then $ t \in \rule (A, B \times C) $, where:
   \begin{align}
     \lambda_t (a)         & = \lambda_r (a) \times \lambda_s (a) \\
@@ -269,27 +321,14 @@ and that both the reduction of $ r $ and the complement of $ r $ are both simple
 
 \begin{definition}
   Let $ r \in \rule (A, B) $
-  and $ s \in \rule (B, C) $
-  and $ t $ be the \textbf{dependent product} of $ s $ and $ r $
-  (written $ t = s \circ r $).
-  Then $ t \in \rule (A, B \times C) $, where:
-  \begin{align}
-    \lambda_t (a)         & = \{ (b, c) | b \in \lambda_r (a), c \in \lambda_s (b) \} \\
-       \phi_t (a, (b, c)) & =    \phi_r (a, \phi_s (b, c)) \\
-       \rho_t (a, (b, c)) & =    \rho_r (a, \phi_s (b, c)).
-  \end{align}
-\end{definition}
-
-\begin{definition}
-  Let $ r \in \rule (A, B) $
   and $ s \in \rule (A \times B, C) $
   and $ t $ be the \textbf{dependent product} of $ s $ and $ r $
-  (written $ t = s \circ r $).
+  (written $ t = r \depp s $).
   Then $ t \in \rule (A, B \times C) $, where:
   \begin{align}
     \lambda_t (a)         & = \{ (b, c) | b \in \lambda_r (a), c \in \lambda_s ((a, b)) \} \\
-       \phi_t (a, (b, c)) & =    \phi_r (\phi_s ((a, b), c)) \\
-       \rho_t (a, (b, c)) & =    \rho_r (\rho_s ((a, b), c)).
+       \phi_t (a, (b, c)) & =    \phi_s ((\phi_r (a, b), b), c) \\
+       \rho_t (a, (b, c)) & =    \rho_r (\rho_s ((a, b), c)). 
   \end{align}
 \end{definition}
 
@@ -329,11 +368,17 @@ and that both the reduction of $ r $ and the complement of $ r $ are both simple
   Let $ A_i, B_i $ be sets for all $ i \leq N $
   such  that $ A_i = B_i $ for all $ i \neq n $.
   Let $ r \in \rule (A_n, B_n)$.
-  Let $ s_i = \begin{cases} \rule_0 & i \neq n \\ r & i = n \end{cases} $.
-  Let $ t = \imp_n^N r $.
-  Then $ t = \bigtimes_{i=1}^N s_i $,
-  so $ t \in \rule (\bigtimes_{i=1}^N A_i, \bigtimes_{i=1}^N B_i) $.
+  Let $ s_i = \begin{cases} \rule_p^{\text{id}} & i \neq n \\ r & i = n \end{cases} $.
+  Then $ \imp_n^N r = \bigtimes_{i=1}^N s_i \in \rule (\bigtimes_{i=1}^N A_i, \bigtimes_{i=1}^N B_i) $.
 \end{definition}
+
+
+The precedence for these operations is defined as follows.
+\begin{align*}
+  (~\gate~) \lessdot (+) \lessdot (\cdot) \lessdot (\depp) \lessdot (\indp) \lessdot (\times) \lessdot (~\rvert~)
+\end{align*}
+
+\subsection{Construction of Fundamental Rules}
 
 \section{Evaluators}
 
