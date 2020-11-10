@@ -5,134 +5,99 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Rule where
-class Rule r a b where
-  lambda :: r -> a -> [b]
-  phi :: r -> b -> a -> a
-  rho :: r -> b -> a -> a
+
+class Rule a b where
+  lambda :: a -> [b]
+  phi    :: b -> a -> a
+  rho    :: b -> a -> a
+
+data Inv b = I b
+instance (Rule a b) => Rule a (Inv b) where
+  lambda = map I . lambda
+  phi (I y) = rho y
+  rho (I y) = phi y
+
+instance (Eq a, Rule a b) => Rule [a] (a, b) where
+  lambda xs = [(x, y) | x <- xs, y <- lambda x]
+  phi (x, y) = (:) (phi y x) . filter (/=x)
+  rho (x, y) = (:) (rho y x) . filter (/=x)
 
 infixl 9 `X`
-data FullProd r s = X r s
-instance (Rule r a b, Rule s c d) => Rule (FullProd r s) (a, c) (b, d) where
-  lambda (X r s) (a, c) = [(b, d) | b <- lambda r a, d <- lambda s c]
-  phi (X r s) (b, d) (a, c) = (phi r b a, phi s d c)
-  rho (X r s) (b, d) (a, c) = (rho r b a, rho s d c)
+data X b d =  X b d deriving (Eq, Read, Show)
+instance (Rule a b, Rule c d) => Rule (a, c) (X b d) where
+  lambda (a, c)        = [X b d | b <- lambda a, d <- lambda c]
+  phi    (X b d) (a, c) = (phi b a, phi d c)
+  rho    (X b d) (a, c) = (rho b a, rho d c)
 
 infixl 8 `Y`
-data ForkProd r s = Y r s
-instance (Rule r a b, Rule s a c) => Rule (ForkProd r s) a (b, c) where
-  lambda (Y r s) x = [(y, z) | y <- lambda r x, z <- lambda s x]
-  phi (Y r s) (y, z) = phi r y . phi s z
-  rho (Y r s) (y, z) = rho s z . rho r y
+data Y b c = Y b c deriving (Eq, Read, Show)
+instance (Rule a b, Rule a c) => Rule a (Y b c) where
+  lambda x         = [Y y z | y <- lambda x, z <- lambda x]
+  phi   (Y y z) = phi y . phi z
+  rho   (Y y z) = rho z . rho y
 
-infixr 7 `D`
-data DependentProd r s = D r s
-instance (Rule r a b, Rule s (a, b) c) => Rule (DependentProd r s) a (b, c) where
-  lambda (D r s) x = [] 
-  phi (D r s) (y, z) = fst . phi s z . (,y) . phi r y
-  rho (D r s) (y, z) = (uncurry $ flip $ rho r) . rho s z . (,y)
+infixr 7 `Z`
+data Z b c = Z b c deriving (Eq, Read, Show)
+instance (Rule a b, Rule (a, b) c) => Rule a (Z b c) where
+  lambda x = [Z y z | y <- lambda x, z <- lambda (x, y)] 
+  phi   (Z y z) = fst . phi z . (,y) . phi y
+  rho   (Z y z) = (uncurry $ flip $ rho) . rho z . (,y)
 
-infixr 6 :-:
-data GateComplement g r = g :-: r
-instance (Rule g a b, Rule r a c) => Rule (GateComplement g r) a c where
-  lambda (g :-: r) x
-    | null $ lambda g x = lambda r x
+data R a = R a deriving (Eq, Read, Show)
+
+infixl 6 `G`
+data G c = G c deriving (Eq, Read, Show)
+instance (Eq a, Rule (R a) (R a), Rule a c) => Rule a (G c) where
+  lambda x
+    | R x `elem` lambda (R x) = map G $ lambda x
     | otherwise = []
-  phi (g :-: r) = phi r
-  rho (g :-: r) = rho r
+  phi (G y) = phi y
+  rho (G y) = rho y
 
-infixr 6 :=:
-data GateReduction g r = g :=: r
-instance (Rule g a b, Rule r a c) => Rule (GateReduction g r) a c where
-  lambda (g :=: r) x
-    | null $ lambda g x = []
-    | otherwise = lambda r x
-  phi (g :=: r) = phi r
-  rho (g :=: r) = rho r
+instance (Rule a b, Rule c d) => Rule (a, c) (Either b d) where
+  lambda (x, y) = (map Left  $ lambda x) ++ (map Right $ lambda y)
+  phi ez (x, y) = case ez of {Left  z -> (phi z x, y); Right z -> (x, phi z y)}
+  rho ez (x, y) = case ez of {Left  z -> (rho z x, y); Right z -> (x, rho z y)}
 
-infixl 5 :*:
-data SmallProd r = r :*: r
+newtype Turn = T Int deriving (Eq, Show, Read, Ord)
+instance Rule Int Turn where
+  lambda  = map T . pure
+  phi (T y) x = y + 1
+  rho (T y) x = y - 1
 
-infixl 4 :+:
-data Sum r = r :+: r
+instance Num Turn where
+  (+) (T x) (T y) = T $ x + y
+  (*) (T x) (T y) = T $ x * y
+  abs       (T x) = T $ abs x
+  signum    (T x) = T $ signum x
+  negate    (T x) = T $ negate x
+  fromInteger     = T . fromInteger
 
-{-
-data Rule a b = R {lambda :: a -> [b], phi :: a -> b -> a, rho :: a ->  b -> a}
+newtype Nim a = N a deriving (Eq, Show, Read, Ord)
+instance (Num a, Enum a) => Rule a (Nim a) where
+  lambda n = map N [1..n]
+  phi (N m) n = n - m 
+  rho (N m) n = n + m
 
-complement :: Rule a b -> Rule a a
-complement r = R {lambda = (\x -> case (lambda r x) of {[] -> [x]; xs -> []}),
-                  phi    = const,
-                  rho    = const}
+instance Num a => Num (Nim a) where
+  (+) (N x) (N y) = N (x + y)
+  (*) (N x) (N y) = N (x * y)
+  abs       (N x) = N $ abs x
+  signum    (N x) = N $ signum x
+  negate    (N x) = N $ negate x
+  fromInteger i   = N $ fromInteger i
 
-reduction :: Rule a b -> Rule a a
-reduction r = R {lambda = (\x -> case (lambda r x) of {[] -> []; xs -> [x]}),
-                 phi    = const,
-                 rho    = const}
+instance Enum a => Enum (Nim a) where
+  toEnum i = N $ toEnum i
+  fromEnum (N i) = fromEnum i
 
-gate g r = R {lambda = (\x -> case (lambda g x) of {[] -> []; xs -> lambda r x}), phi = phi r, rho = rho r}
+instance Real a => Real (Nim a) where
+  toRational (N i) = toRational i
 
-union :: Rule a b -> Rule a b -> Rule a b
-union r s = R {lambda = (\x -> (lambda r x) ++ (lambda s x)),
-               phi    = phi r,
-               rho    = rho r}
+instance Integral a => Integral (Nim a) where
+  toInteger (N i) = toInteger i
+  quotRem (N i) (N j) = (N $ fst $ quotRem i j, N $ fst $ quotRem i j) 
 
-disjointUnion :: Rule a b -> Rule a c -> Rule a (Either b c)
-disjointUnion r s = R {lambda = (\x -> (map Left $ lambda r x) ++ (map Right $ lambda s x)),
-                       phi    = (\x y -> case y of {Left z -> phi r x z; Right z -> phi s x z}),
-                       rho    = (\x y -> case y of {Left z -> rho r x z; Right z -> rho s x z})}
-
-intersection :: Eq b => Rule a b -> Rule a b -> Rule a b
-intersection r s = R {lambda = (\x -> [y | y <- lambda r x, y `elem` lambda s x]),
-                      phi    = phi r,
-                      rho    = rho r}
-
-independentProduct :: Rule a b -> Rule a c -> Rule a (b, c)
-independentProduct r s = R {lambda = (\x -> [(yr, ys) | yr <- lambda r x, ys <- lambda s x]),
-                            phi    = (\x (y, z) -> phi r (phi s x z) y),
-                            rho    = (\x (y, z) -> rho s (rho r x y) z)}
-
-dependentProduct :: Rule a b -> Rule (a, b) c -> Rule a (b, c)
-dependentProduct r s = R {lambda = (\x -> [(y, z) | y <- lambda r x, z <- lambda s (x, y)]),
-                           phi    = (\x (y, z) -> (uncurry $ phi r) $ phi s (x, y) z),
-                           rho    = (\x (y, z) -> (uncurry $ rho r) $ rho s (x, y) z)}
-
-
-fullProduct :: Rule a b -> Rule c d -> Rule (a, c) (b, d)
-fullProduct r s = R {lambda = (\(a, c) -> [(b, d) | b <- lambda r a, d <- lambda s c]),
-                     phi    = (\(a, c) (b, d) -> (phi r a b, phi s c d)),
-                     rho    = (\(a, c) (b, d) -> (rho r a b, rho s c d))}
-
-patternStep :: (a -> [a]) -> (a -> Bool) -> a -> [a]
-patternStep step stop x
-  | stop x = [x]
-  | otherwise = (++) [x] $ mconcat . map (patternStep step stop) $ step x
-
-pattern :: Rule b b -> Rule a b -> Rule b c -> Rule a b
-pattern r s t = R {lambda = concat . map (patternStep (lambda r) (null . lambda t)) . lambda s,
-                   phi    = (\x y -> phi s x $ phi r y y),
-                   rho    = (\x y -> rho s x $ rho r y y)}
-
-voidRule :: Rule a b
-voidRule = R {lambda = const [], phi = const, rho = const}
-
-passRule :: Rule a a
-passRule = R {lambda = pure, phi = const, rho = const}
-
-
-infixl 5 /+
-(/+) = union
-(/-/) = disjointUnion
-
-infixl 6 /*
-(/*) r s = intersection r s
-
---infixr 7 /|
---(/|) = dependentProduct
-
-infixl 8 \/
-(\/) = independentProduct
-
-(><) = fullProduct
-
--}
