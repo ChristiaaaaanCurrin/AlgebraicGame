@@ -13,6 +13,9 @@ class InvR r where
   invR  :: r -> r
   passR :: r
 
+graph :: Move a b => Rule a b -> a -> [a]
+graph r x = map (# x) $ r x
+
 type Rule a b = a -> [b]
 instance Inv b => InvR (Rule a b) where
   (r /% s) x = [z % y | z <- r x, y <- s x]
@@ -23,6 +26,12 @@ gate :: Inv b => (a -> Bool) -> Rule a b
 gate f x
   | f x = pure pass
   | otherwise = []
+
+liftStep :: Int -> Rule a b -> Rule [a] (Select b)
+liftStep i r [] = []
+liftStep i r (x:xs) = map (Select [i]) (r x) ++ (liftStep (i + 1) r xs)
+
+lift = liftStep 0
 
 infixl 9 /:
 (/:) :: Inv b => Rule a b -> Int -> Rule a b

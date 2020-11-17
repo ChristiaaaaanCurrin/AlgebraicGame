@@ -23,3 +23,8 @@ instance (Move a b) => Move a [b] where
 instance (Move a b, Move a c) => Move a (Either b c) where
   (Left  y) # x = y # x
   (Right y) # x = y # x
+
+data Select b = Select [Int] b deriving (Show, Read, Eq, Ord)
+instance (Move a b) => Move [a] (Select b) where
+  (#) (Select []     y) xs = xs 
+  (#) (Select (i:is) y) xs = (Select is y) # ((++) (take i xs) $ (y # (xs!!i)):(drop (i+1) xs))

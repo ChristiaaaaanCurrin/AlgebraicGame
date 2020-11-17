@@ -6,6 +6,8 @@
 
 module Inv  where
 
+import Move
+
 infixr 8 %
 
 class Inv m where
@@ -34,4 +36,8 @@ instance (Inv b) => Inv [b] where
   (%) = (++)
   inv  ys = map inv $ reverse ys
   pass = pure pass
- 
+
+instance (Inv b) => Inv (Select b) where
+  (%) (Select is y1) (Select js y2) = Select is (y1 % y2)
+  inv (Select is y) = Select is (inv y)
+  pass = Select [0] pass
