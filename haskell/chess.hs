@@ -26,20 +26,25 @@ passBoard = gate (\(x, y) -> x <  8
                           && y <  8
                           && y >= 0)
 
+friendlyFire (((p, _), (x, y)):pcs) = any id [x' == x && y' == y && p' == p | ((p', k), (x', y')) <- pcs] || friendlyFire pcs
 passFriendly :: ChessRule
-passFriendly = pass
+passFriendly = gate friendlyFire
 
+detectCapture (((p, _), (x, y)):pcs) = any id [x' == x && y' == y && p' /= p | ((p', k), (x', y')) <- pcs] || friendlyFire pcs
 passCapture :: ChessRule
-passCapture = pass
+passCapture = gate detectCapture
+
+
 
 
 inc :: Rule Vec1 Vec1
 inc x = [Sum 1] 
 
+ds = [x /* y | x <- [pass, inc, inv inc], y <- [pass, inc, inv inc]] 
+bds = map (passBoard /.) ds
+
 rook :: ChessPieceRule
-rook = ((pass /* pass) /*) $ (passBoard /.)
-                      $         ((inv inc) /:/ 8 // inc /:/ 8) /* pass
-                     // pass /* ((inv inc) /:/ 8 // inc /:/ 8)
+rook = lift 
 
 bishop :: ChessPieceRule
 bishop = ((pass /* pass) /*) $ (passBoard /.)
@@ -63,7 +68,7 @@ knight = ((pass /* pass) /*) $ (passBoard /.)
 
 
 capture :: ChessPieceRule
-capture ((p, t), (x, y)) = [((mempty, mempty), (-x-1, -y-1))]
+capture = pass /* (inc /: 8 /* inc /: 8)
 
 
 stringPiece :: ChessPiece -> String
