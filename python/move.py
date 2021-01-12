@@ -11,7 +11,7 @@ class Move(ABC):
         pass
 
     def __mul__(self, other):
-        return CartesianProduct(self, other)
+        return ParallelMove(self, other)
 
     def __mod__(self, other):
         return Composition(self, other)
@@ -22,24 +22,36 @@ class Identity(Move):
         return state
 
     def __eq__(self, other):
-        return other == other.get_inverse()
+        return type(self) == type(other) or other == other.get_inverse()
 
-    def __str__(self):
-        return 'e'
+    def __repr__(self):
+        return "e"
 
     def get_inverse(self):
         return self
 
 
-class CartesianProduct(Move):
+class ParallelMove(Move):
     def __init__(self, *moves):
         self.children = moves
 
     def __call__(self, state):
-        pass
+        moves = self.children
+        states = state
+        new_state = ()
+        while moves and states:
+            move, *moves = moves
+            state, *states = states
+            new_state = *new_state, move(state)
+        assert not moves, "The Move is Bigger than the State"
+        assert not states, "The State is Bigger than the Move"
+        return new_state
 
     def __eq__(self, other):
         return type(self) == type(other) and self.children == other.children
+
+    def __repr__(self):
+        return "(" + ", ".join([child.__repr__() for child in self.children]) + ")"
 
     def __iter__(self):
         return self.children.__iter__()
@@ -48,7 +60,7 @@ class CartesianProduct(Move):
         return self.children.__next__()
 
     def get_inverse(self):
-        return CartesianProduct(*[move.get_inverse() for move in self.children])
+        return ParallelMove(*[move.get_inverse() for move in self.children])
 
 
 class Composition(Move):
@@ -65,6 +77,9 @@ class Composition(Move):
     def __eq__(self, other):
         return type(self) == type(other) and self.children == other.children
 
+    def __repr__(self):
+        return " o ".join([child.__repr__() for child in self.children])
+
     def __iter__(self):
         return self.children.__iter__()
 
@@ -79,16 +94,18 @@ class SumMove(Move):
     def __init__(self, value):
         self.value = value
 
+    def __repr__(self):
+        return "s" + self.value.__repr__()
+
     def __call__(self, state):
         return state + self.value
 
     def get_inverse(self):
-        return -self.value
+        return SumMove(-self.value)
 
 
 if __name__ == '__main__':
     e = Identity()
     s = SumMove(1)
-    m = s * s
+    m = s.get_inverse() % e % s % s
     print(m(1))
-    print(type([1, 'a', None]))

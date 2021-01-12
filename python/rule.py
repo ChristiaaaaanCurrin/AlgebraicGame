@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from move import Identity
+from move import Identity, SumMove, Composition, ParallelMove
 
 
 class Rule(ABC):
@@ -23,15 +23,21 @@ class Rule(ABC):
         return DotProduct(self, other)
 
     def __add__(self, other):
-        return self * Pass() | Pass() * other
+        return self * PassRule() | PassRule() * other
+
+    def graph(self, state):
+        return [move(state) for move in self.list_legal(state)]
 
 
-class Void(Rule):
+class VoidRule(Rule):
     def legal(self, state, move):
         return False
 
     def list_legal(self, state):
         return []
+
+    def __repr__(self):
+        return "0"
 
     def __or__(self, other):
         return other
@@ -42,18 +48,27 @@ class Void(Rule):
     def __mul__(self, other):
         return self
 
+    def __mod__(self, other):
+        return self
 
-class Pass(Rule):
+
+class PassRule(Rule):
+    def __repr__(self):
+        return "p"
+
     def legal(self, state, move):
         return move.get_inverse() == move
 
     def list_legal(self, state):
-        return Identity()
+        return [Identity()]
 
 
 class Union(Rule):
     def __init__(self, rule, *rules):
         self.children = (rule, *rules)
+
+    def __repr__(self):
+        return "(" + " | ".join([child.__repr__() for child in self.children]) + ")"
 
     def legal(self, state, move):
         for rule in self.children:
@@ -75,6 +90,9 @@ class Intersection(Rule):
     def __init__(self, rule, *rules):
         self.children = rule, *rules
 
+    def __repr__(self):
+        return "(" + " & ".join([child.__repr__() for child in self.children]) + ")"
+
     def legal(self, state, move):
         for rule in self.children:
             if not rule.legal(state, move):
@@ -90,14 +108,20 @@ class Intersection(Rule):
             if rule.list_legal(state) == NotImplemented:
                 return NotImplemented
             for move in legal:
-                if move not in rule.list_legal():
+                if move not in rule.list_legal(state):
                     legal.remove(move)
+                    print(move)
+                    print(state)
+                    print(legal)
         return legal
 
 
 class CrossProduct(Rule):
     def __init__(self, rule, *rules):
         self.children = rule, *rules
+
+    def __repr__(self):
+        return "(" + " * ".join([child.__repr__() for child in self.children]) + ")"
 
     def legal(self, state, move):
         move, *moves = move
@@ -111,12 +135,12 @@ class CrossProduct(Rule):
 
     def list_legal(self, state):
         rule, *rules = self.children
-        if rule.list_legal(state) == NotImplemented:
+        if rule.list_legal(state) is NotImplemented:
             return NotImplemented
         legal = rule.list_legal(state)
         for rule in rules:
             new_legal = []
-            if rule.list_legal(state) == NotImplemented:
+            if rule.list_legal(state) is NotImplemented:
                 return NotImplemented
             for move in legal:
                 for comp in rule.list_legal(state):
@@ -128,6 +152,9 @@ class CrossProduct(Rule):
 class DotProduct(Rule):
     def __init__(self, rule, *rules):
         self.children = rule, *rules
+
+    def __repr__(self):
+        return "(" + " % ".join([child.__repr__() for child in self.children]) + ")"
 
     def legal(self, state, move):
         *move, moves = move
@@ -144,9 +171,10 @@ class DotProduct(Rule):
         *rules, rule = self.children
         if rule.list_legal(state) == NotImplemented:
             return NotImplemented
-        legal = rule.list_legal(state)
+        legal = [Composition(move) for move in rule.list_legal(state)]
         for rule in rules:
             new_legal = []
+            print(legal)
             if rule.list_legal(state) == NotImplemented:
                 return NotImplemented
             for move in legal:
@@ -157,14 +185,24 @@ class DotProduct(Rule):
 
 
 class ConstantRule(Rule):
-    def __init__(self, move):
-        self.move = move
+    def __init__(self, moves):
+        self.moves = moves
+
+    def __repr__(self):
+        return self.moves.__repr__()
 
     def legal(self, state, move):
-        return move == self.move
+        return move == self.moves
 
     def list_legal(self, state):
-        return self.move
+        return self.moves
 
 
-print(2 ^ 3)
+if __name__ == "__main__":
+    r = (ConstantRule([SumMove(1)]) | ConstantRule([SumMove(2)]) | PassRule()) & PassRule()
+    p = PassRule()
+    s = r % p % r
+    print(r.list_legal(1))
+    print(r)
+    print(SumMove(2) == Identity())
+    #print(s.list_legal( ((1,1), 1) ) )
