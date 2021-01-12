@@ -3,15 +3,11 @@ module Chess where
 
 import Data.Semigroup 
 import Rule
-import Nim
+import Vec
 import Move
 import Grp
 
-type Vec1 = (Sum Int)
-type Vec2 = (Sum Int, Sum Int)
-type Vec3 = (Sum Int, Sum Int, Sum Int)
-
-type ChessPiece = (Vec2, Vec2)
+type ChessPiece = ((Sum Int, Sum Int), (Sum Int, Sum Int))
 type ChessPieceMove = ChessPiece
 type ChessPieceRule = Rule ChessPiece ChessPieceMove
 
@@ -19,53 +15,32 @@ type ChessGameState = [ChessPiece]
 type ChessMove = (Select ChessPieceMove)
 type ChessRule = Rule ChessGameState ChessMove
 
-
-passBoard :: Rule Vec2 Vec2
-passBoard = gate (\(x, y) -> x <  8
-                          && x >= 0
-                          && y <  8
-                          && y >= 0)
+board = ((0, 8), (0, 8))
 
 friendlyFire (((p, _), (x, y)):pcs) = any id [x' == x && y' == y && p' == p | ((p', k), (x', y')) <- pcs] || friendlyFire pcs
 passFriendly :: ChessRule
 passFriendly = gate friendlyFire
 
-detectCapture (((p, _), (x, y)):pcs) = any id [x' == x && y' == y && p' /= p | ((p', k), (x', y')) <- pcs] || friendlyFire pcs
+detectCapture (((p, _), (x, y)):pcs) = any id [x' == x && y' == y && p' /= p | ((p', k), (x', y')) <- pcs] || detectCapture pcs
 passCapture :: ChessRule
 passCapture = gate detectCapture
 
-
-
-
-inc :: Rule Vec1 Vec1
-inc x = [Sum 1] 
-
-ds = [x /* y | x <- [pass, inc, inv inc], y <- [pass, inc, inv inc]] 
-bds = map (passBoard /.) ds
-
 rook :: ChessPieceRule
-rook = lift 
+rook = void 
 
 bishop :: ChessPieceRule
-bishop = ((pass /* pass) /*) $ (passBoard /.)
-                        $ (    inc /*     inc) /:/ 8
-                       // (    inc /* inv inc) /:/ 8
-                       // (inv inc /*     inc) /:/ 8
-                       // (inv inc /* inv inc) /:/ 8
+bishop = ((pass /* pass) /*) $ (passBoard2 board /.)
+                        $ (vec2   1    1 ) /:/ 8
+                       // (vec2   1  (-1)) /:/ 8
+                       // (vec2 (-1)   1 ) /:/ 8
+                       // (vec2 (-1) (-1)) /:/ 8
 
 queen = bishop // rook
 
 knight :: ChessPieceRule
-knight = ((pass /* pass) /*) $ (passBoard /.)
-       $ (    inc /: 2 /* inv inc     )
-      // (    inc      /* inv inc /: 2)
-      // (    inc /: 2 /*     inc     )
-      // (    inc      /*     inc /: 2)
-      // (inv inc /: 2 /* inv inc     )
-      // (inv inc      /* inv inc /: 2)
-      // (inv inc /: 2 /*     inc     )
-      // (inv inc      /*     inc /: 2)
-
+knight = ((pass /* pass) /*)
+       $ (passBoard2 board /.)
+       $ foldr (//) void [vec2 (f i) (g j) | (i, j) <- [(1, 2), (2, 1)], f <- [negate, id], g <- [negate, id]]
 
 capture :: ChessPieceRule
 capture = pass /* (inc /: 8 /* inc /: 8)

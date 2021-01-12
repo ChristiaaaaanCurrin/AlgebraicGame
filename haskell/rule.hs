@@ -15,8 +15,10 @@ type Rule a b = a -> [b]
 instance Grp b => Grp (Rule a b) where
   inv r x = map inv $ r x
 
-rule0 :: Rule a b
-rule0 x = []
+type SymRule a = Rule a a
+
+void :: Rule a b
+void x = []
 
 pass :: Monoid b => Rule a b
 pass x = [mempty]
@@ -41,6 +43,11 @@ r /: n
   | n <= 1 = r
   | otherwise = r /. r /: (n - 1)
 
+infixl 9 /:/
+r /:/ n
+  | n <= 1 = r
+  | otherwise = r /: n // r /:/ (n - 1)
+
 infixr 8 /./
 (/./) :: Move a b => Rule a c -> Rule a b -> Rule a [Either c b]
 (r /./ s) x = [[Left z, Right y] | y <- s x, z <- r (y # x)]
@@ -64,7 +71,3 @@ infixr 5 /-/
 infixl 4 /+
 r /+ s = (r /* pass) /-/ (pass /* s) 
 
-infixl 9 /:/
-r /:/ n
-  | n <= 1 = r
-  | otherwise = r /: n // r /:/ (n - 1)

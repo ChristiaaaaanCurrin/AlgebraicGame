@@ -16,10 +16,8 @@
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}
 
-\def\rule{\mathcal{R}}
+\def\Rule{\mathcal{R}}
 \DeclareMathOperator{\imp}{imp}
-\DeclareMathOperator{\rpass}{rpass}
-\DeclareMathOperator{\rcons}{rcons}
 
 \newcommand{\depp}{\mathbin{\: \, \mathclap{\tikz{
   \draw (-.20em, -.20em) -- (.20em, .20em);
@@ -46,336 +44,94 @@
 
 \section{Games}
 
+\section{Moves}
+
 \section{Rules}
 
 \subsection{Motivation and Definition} % SUBSECTION
 
-The purpose of a rule is to define legal transitions between states in a game.
-It may be tempting to define a rule as a function from one state to another state,
-but this approach is very limited,
-as it does not help to describe the moves themselves,
-only the consequences of those moves.
-The definition of a rule must include
-the definition of a function $ \lambda $ that generates the legal moves from a given state
-and the definition of a function $ \phi $ that executes a given move on a given state.
-The moves must be independent of the state, so that the same move can be executed on different states.
-Moves must also be reversable,
-meaning that, given any states $ s $ and $ s' $ and move $ m $,
-where $ m $ is the move from $ s $ to $ s' $,
-there must be a way to find $ s $ from only $ s' $ and $ m $.
-This reverse operation is the responsibility of a third function $ \rho $.
-The requirements of these three functions gives the following definition for a rule:
-
- \begin{definition}
-  $ r $ is a \textbf{rule} on sets $ A $ and $ B $ (written  $ r \in \rule (A, B) $) iff
-  $ \lambda_r : A          \rightarrow \mathcal{P} (B) $,
-  $    \phi_r : A \times B \rightarrow A $,
-  $    \rho_r : A \times B \rightarrow A $,
-  such that $ \phi_r (\rho_r (a, b), b) = a $
-  and $ \rho_r (\phi_r (a, b), b) = a $,
-  for all $ a \in A $, $ b \in \lambda_r (a) $.
-\end{definition}
-
-For the rule-of-play, $ r $, of a game,
-the set of all well-formed states, $ S $, forms the input set (above denoted as $ A $) for $ r $
-and the set of all well-formed moves, $ M $, forms the output set (above denoted as $ B $) for $ r $,
-so $ r \in \rule (S, M) $.
-However, not all rules have the set of well-formed states as their input set.
-In fact, most do not.
-For most rules the input set is the state with some data added or removed based on related moves.
-Take, for example, the rule for capturing in chess.
-In most cases, captures are performed by moving one piece onto a square occupied by another piece
-(the notable exception to this is en-passant capturing)
-Thus, the legal captures are dependent, not only on the state (i.e. where all the pieces are located),
-but also on the move being made, a piece only captures on the square that it moves to.
-
-It is \emph{possible} to define a function that finds all legal captures
-and a second function that finds all legal moves that are not captures,
-but this approach sacrifices the flexibility afforded by having
-one rule that is responsible for the \emph{movement} of pieces
-and having another rule that is responsible for the conditions under which pieces are \emph{captured}.
-In the latter case, the idea of capturing on the square to which you move is separated from the idea of moving in certain ways.
-That way chess movement patterns can be applied to games without capturing or with different systems for capturing
-and the same capturing rule applies to all of the pieces in chess (except for pawns).
-
-\subsection{Properties of rules} % SUBSECTION
-
-In order to discuss rules,
-it is necessary to establish some vocabulary.
-
 \begin{definition}
-  Let $ r \in \rule (A, B) $ and $ s \in \rule (B, C) $.
-  Then $ s $ is \textbf{dependent} on $ r $
-\end{definition}
-
-Dependence is useful for describing which rules can be applied after others.
-For example, chess pieces have one rule that defines how they move,
-and another rule that describes what captures occur given a particular move.
-Thus the capturing rule is dependent on the movement rule,
-because which captures are possible depends on which move is being made.
-
-\begin{definition} 
-  Let $ r \in \rule (A, B) $. $ r $ is \textbf{repeatable} iff $ A \supseteq B $.
-\end{definition}
-
-Repeatable rules are rules where the output set is contained in the input set.
-This is means that repeatable rules can be applied again on their own outputs.
-This property is useful for rules that are applied in patterns,
-e.g. the movments of bishops and rooks in chess.
-Notice that repeatable rules both succeed and precede themeselves.
-
-\begin{definition}
-  Let $ r \in \rule (A, A) $. $ r $ is \textbf{constant}
-  (written $ r \in \rule_c (A, A) $)
-  iff $ \lambda_r (a) = \{ a \} $ for all $ a \in A $.
-\end{definition}
-
-Constant rules are rules that do not present the player with any choice as to how the rule is applied.
-Thus the legal moves from a constant rule on any given input is the singleton set containing only that input.
-Notice that all constant rules are also repeatable.
-One example of a constant rule is the turn mechanic common to most games.
-Regardless of the choices made by the players,
-on every turn, the player whose turn it is changes.
-
-\begin{definition}
-  Let $ r \in \rule (A, B) $. $ r $ is \textbf{passive}
-  (written $ r \in \rule_p (A, B) $)
-  iff $ \phi_r (a, b) = a $ for all $ a \in A $, $ b \in \lambda_r (a) $.
-\end{definition}
-
-Notice that passive rules are not capable of altering the state of the game,
-only of translating it for use by other rules.
-
-\begin{definition}
-  Let $ r \in \rule (A, B) $
-  and $ s \in \rule (A, C) $.
-  $ r $ and $ s $ are \textbf{independent}
-  (written $ r \perp s $)
-  iff $ \phi_r (\phi_s (a, c), b) = \phi_s (\phi_r (a, b), c) $, 
-  for all $ a \in A $, $ b \in B $, $ c \in C $.
+  Let $ A $ be a set and
+  let $ (B, \circ) $ be a group with action on $ A $.
+  Let $ r : A \rightarrow \mathcal{P} (B) $.
+  Then $ r \in \Rule (A, B, \circ) $. 
 \end{definition}
 
 \subsection{Elementary Rules} % SUBSECTION
 
 \begin{definition}
-  Let $ f : A \rightarrow B $ be a bijection.
-  Let $ r $ be the \textbf{passive form} of $ f $
-  (written $ r = \rule_p^f $).
-  Then $ r \in \rule (A, B) $ where:
-  \begin{align}
-    \lambda_r (a)    & = \{ f (a) \} \\
-       \phi_r (a, b) & = f^{-1} (b) \\
-       \rho_r (a, b) & = f^{-1} (b).
-  \end{align}
+  Let $ (G, \cdot) $ be a Group with action on $ A $.
+  Define $ r $ to be the rule \textbf{induced} by $ G $
+  (written $ r = R (G, \cdot) $).
+  Let $ x \in A $.
+  Then $ r (x) = G $.
 \end{definition}
 
 \begin{definition}
-  Let $ f : A \rightarrow A $ be a bijection.
-  Let $ r $ be the \textbf{constant form} of $ f $
-  (written $ r = \rule_c^f $).
-  Then $ r \in \rule (A, A) $ where:
-  \begin{align}
-    \lambda_r (a)        & = \{ a \} \\
-       \phi_r (a_1, a_2) & = f (a_2) \\
-       \rho_r (a_1, a_2) & = f^{-1} (a_2) \\
-  \end{align}
-\end{definition}
-
-\begin{definition}
-  Let $ f : A \rightarrow B $ where $ b \subseteq \mathbb{R} $.
-  Let $ r $ be the \textbf{gate form} of $ f $
-  (written $ r \in \rule_g^f $).
-  Then $ r \in \rule (A, A) $ where:
-  \begin{align}
-    \lambda_r (a)    & = \begin{cases}
-                           \{ a \}     & f (a) \neq 0 \\
-                           \varnothing & f (a) =    0 \\
-                         \end{cases} \\
-       \phi_r (a, b) & = a \\
-       \rho_r (a, b) & = a
-  \end{align}
+  Let $ A $ and $ B $ be sets where $ A \subseteq B $.
+  Let $ x \in B $.
+  Then $ P_A \in \Rule (B, \{ e \}, \cdot) $
+  where $ P_A = \begin{cases} \varnothing & x \notin A \\ \{ e \} & x \in A \end{cases} $
+    and $ e $ denotes the identity element of the trivial group.
+  For 
 \end{definition}
 
 \subsection{Operations on Rules} % SUBSECTION
-
-While the rule-of-play for a game can be created using a single rule
-that handles all off the intricacies of the game,
-The advantage offered by the rule structure
-is the ability to combine simpler rules,
-each of which control only a small part of the game.
-Simple rules can be combined or modified into more complex ones using the following operations.
-
-\begin{definition}
-  Let $ g \in \rule (A, C) $ and
-  let $ r \in \rule (A, B) $ and
-  let $ t $ be $ r $ \textbf{gated} by $ g $
-  or $ g $ \textbf{gate} $ r $.
-  (written $ t = g \gate r $).
-  Then $ t \in \rule (A, B) $ where:
-  \begin{align}
-    \lambda_t (a) & = \begin{cases}
-                         \lambda_r (a) & \lambda_g (a) \neq \varnothing \\
-                         \varnothing & \lambda_g (a) = \varnothing
-                      \end{cases} \\
-    \phi_t (a, b) & = \phi_r (a, b) \\
-    \rho_t (a, b) & = \rho_r (a, b)
-  \end{align}
-\end{definition}
-
-\begin{definition}
-  Let $ r \in \rule (A, B) $
-  and $ s $ be the \textbf{complement} of $ r $
-  (written $ s = \overline{r} $).
-  Then $ s \in \rule (A, A) $, where:
-  \begin{align}
-    \lambda_s (a)    & = \begin{cases}
-                           \varnothing & \lambda_r (a) \neq \varnothing \\
-                           \{ a \}     & \lambda_r (a) = \varnothing
-                         \end{cases} \\
-       \phi_s (a_1, a_2) & = a_2 \\
-       \rho_s (a_1, a_2) & = a_2.
-  \end{align}
-\end{definition}
-
-\begin{definition}
-  Let $ r \in \rule (A, B) $
-  and $ s $ be the \textbf{reduction} of $ r $ 
-  (written $ s = \overline{\overline{r}} $).
-  Then $ s \in \rule (A, A) $, where:
-  \begin{align}
-    \lambda_s (a)    & = \begin{cases}
-                           \varnothing & \lambda_r (a) = \varnothing \\
-                           \{ a \}     & \lambda_r (a) \neq \varnothing
-                         \end{cases} \\
-       \phi_s (a_1, a_2) & = a_2 \\
-       \rho_s (a_1, b_2) & = a_2.
-  \end{align}
-\end{definition}
-
-Notice that the reduction of $ r $ is equivalent to the complement of the complement of $ r $
-and that both the reduction of $ r $ and the complement of $ r $ are both simple and constant for any $ r \in \rule (A, B) $.
-
-\begin{definition}
-  Let $ r \in \rule (A, B) $
-  and $ s $ be $ r $ \textbf{lifted}
-  or \textbf{lift} $ r $
-  (written $ s = \widehat{r} $).
-  Then $ s \in \rule (\mathcal{P} (A), A \times B) $ where:
-  \begin{align}
-    \lambda_s (A)         & = \{(a, b) ~|~ a \in A, b \in \lambda_r (a) \} \\
-       \phi_s (A, (a, b)) & = (A \setminus \{ a \} ) \cup \{ \phi_r (a, b) \} \\
-       \rho_s (A, (a, b)) & = (A \setminus \{ a \} ) \cup \{ \rho_r (a, b) \} \\
-  \end{align}
-\end{definition}
-
-\begin{definition}
-  Let $ r \in \rule (A, B) $
-  and $ s \in \rule (A, C) $
-  and $ \phi_s (a, b) = \phi_r (a, b) $
-  for all $ a \in A, b \in B \cap C $
-  and $ t $ be the \textbf{sum} or \textbf{union} of $ s $ and $ r $
-  (written $ t = s + r $).
-  Then $ t \in \rule (A, B \cup C) $, where:
-  \begin{align}
-    \lambda_t (a)    & = \lambda_r (a) \cup \lambda_s (a) \\
-       \phi_t (a, b) & = \begin {cases}
-                           \phi_s (a, b)                 & b \in C \setminus B \\
-                           \phi_r (a, b)                 & b \in B \setminus C \\
-                           \phi_s (a, b) = \phi_r (a, b) & b \in B \cap C
-                         \end{cases} \\
-        \rho_t (a, b) & = \begin {cases}
-                           \rho_s (a, b)                 & b \in C \setminus B \\
-                           \rho_r (a, b)                 & b \in B \setminus C \\
-                           \rho_s (a, b) = \rho_r (a, b) & b \in B \cap C.
-                         \end{cases} 
-  \end{align}
-\end{definition}
-
-\begin{definition}
-  Let $ r \in \rule (A, B) $
-  and $ s \in \rule (A, C) $
-  and $ \phi_s (a, b) = \phi_r (a, b) $
-  for all $ a \in A, b \in B \cap C $
-  and $ t $ be the \textbf{small product} or \textbf{intersection} of $ s $ and $ r $
-  (written $ t = s \cdot r $).
-  Then $ t \in \rule (A, B \cap C) $, where:
-  \begin{align}
-    \lambda_t (a)    & = \lambda_r (a) \cap \lambda_s (a) \\
-       \phi_t (a, b) & = \phi_s (a, b) = \phi_r (a, b) \\
-       \rho_t (a, b) & = \rho_s (a, b) = \rho_r (a, b).
-  \end{align}
-\end{definition}
-
-\begin{definition}
-  Let $ r \in \rule (A, B) $
-  and $ s \in \rule (A, C) $
-  and $ t $ be the \textbf{independent product} or \textbf{fork product} of $ s $ and $ r $
-  (written $ t = s \indp r $).
-  Then $ t \in \rule (A, B \times C) $, where:
-  \begin{align}
-    \lambda_t (a)         & = \lambda_r (a) \times \lambda_s (a) \\
-       \phi_t (a, (b, c)) & =    \phi_r (\phi_s (a, c), b) \\
-       \rho_t (a, (b, c)) & =    \rho_s (\rho_r (a, b), c).
-  \end{align}
-\end{definition}
-
-\begin{definition}
-  Let $ r \in \rule (A, B) $
-  and $ s \in \rule (A \times B, C) $
-  and $ t $ be the \textbf{dependent product} of $ s $ and $ r $
-  (written $ t = r \depp s $).
-  Then $ t \in \rule (A, B \times C) $, where:
-  \begin{align}
-    \lambda_t (a)         & = \{ (b, c) | b \in \lambda_r (a), c \in \lambda_s ((a, b)) \} \\
-       \phi_t (a, (b, c)) & =    \phi_s ((\phi_r (a, b), b), c) \\
-       \rho_t (a, (b, c)) & =    \rho_r (\rho_s ((a, b), c)). 
-  \end{align}
-\end{definition}
-
-\begin{definition}
-  Let $ r \in \rule (A, B) $
-  and $ s \in \rule (C, D) $
-  and $ t $ be the \textbf{full product} of $ s $ and $ r $
-  (written $ t = s \times r $).
-  Then $ t \in \rule (A \times B, C \times D) $, where:
-  \begin{align}
-    \lambda_t ((a, c))         & = \{ (b, d) | b \in \lambda_r (a), d \in \lambda_s (c) \} \\
-       \phi_t ((a, c), (b, d)) & = (\phi_r (a, b), \phi_s (c, d)) \\
-       \rho_t ((a, c), (b, d)) & = (\rho_r (a, b), \rho_s (c, d)).
-  \end{align}
-\end{definition}
-
-\begin{definition}
-  Let $ r \in \rule (B, B) $
-  and $ s \in \rule (A, B) $
-  and $ t \in \rule (B, C) $
-  and $ v $ be $ r $ \textbf{patterned} from $ s $ to $ t $
-  (written $ v = r \rvert_{s}^{t} $).
-  Then, $ v \in \rule (A, B) $, where:
-  \begin{align}
-      \kappa_v (b) & = \begin{cases}
-                         \{ b \}                                               & \lambda_t (b) \neq \varnothing \\
-                         \{ b \} \cup (\widehat{\kappa}_v \circ \lambda_r (b)) & \lambda_t (b) =    \varnothing
-                       \end{cases} \\
-  \lambda_v (a)    & = \widehat{\kappa}_v \circ \lambda_s (a) \\
-     \phi_v (a, b) & = \phi_s (a, \phi_r (b, b)) \\
-     \rho_v (a, b) & = \rho_s (a, \rho_r (b, b)).
-  \end{align}
-\end{definition}
-
-\begin{definition}
-  Let $ n, N \in \mathbb{N} $ such that $ 0 < n \leq N $.
-  Let $ A_i, B_i $ be sets for all $ i \leq N $
-  such  that $ A_i = B_i $ for all $ i \neq n $.
-  Let $ r \in \rule (A_n, B_n)$.
-  Let $ s_i = \begin{cases} \rule_p^{\text{id}} & i \neq n \\ r & i = n \end{cases} $.
-  Then $ \imp_n^N r = \bigtimes_{i=1}^N s_i \in \rule (\bigtimes_{i=1}^N A_i, \bigtimes_{i=1}^N B_i) $.
-\end{definition}
-
-
-The precedence for these operations is defined as follows.
 \begin{align*}
-  (~\gate~) \lessdot (+) \lessdot (\cdot) \lessdot (\depp) \lessdot (\indp) \lessdot (\times) \lessdot (~\rvert~)
+              r & : A \rightarrow B \\
+              s & : C \rightarrow D \\
+     r \times s & : A \times C \rightarrow B \times D \\
+    (r \times s) (x, y) & = r (x) \times s (y) \\
+\end{align*}
+
+\begin{align*}
+              r & : A \rightarrow B \\
+              s & : A \rightarrow C \\
+     r \wedge s & : A \rightarrow B \cap C \\
+    (r \wedge s) (x) & = r (x) \cap s (x) \\ 
+\end{align*}
+
+\begin{align*}
+            r & : A \rightarrow B \\
+            s & : A \rightarrow C \\
+     r \vee s & : A \rightarrow B \cup C \\
+    (r \vee   s) (x) & = r (x) \cup s (x) \\
+\end{align*}
+
+\begin{align*}
+             r & : A \rightarrow B \\
+             s & : A \rightarrow C \\
+     r \cdot s & : A \rightarrow B \times C \\
+    (r \cdot  s) (x) & = \{ z \circ y : y \in s (x), z \in r (y \cdot x) \} \\
+\end{align*}
+
+\begin{align*}
+              r  & : A \rightarrow B \\
+     \widehat{r} & : \mathcal{P} (A) \rightarrow A \times B \\
+     \widehat{r} (X) & = \bigsqcup \{ r (x) : x \in X \} \\
+\end{align*}
+
+\begin{align*}
+              n & \in \mathbb{N} \\
+              r & : A \rightarrow B \\
+            r^n & : A \rightarrow B \\
+                 r^n & = \begin{cases}
+                           P               & n = 0  \\
+                           r \cdot r^{n-1} & n > 0
+                         \end{cases} \\
+\end{align*}
+
+\begin{align*}
+                   r & : A \rightarrow B \\
+              r^{-1} & : A \rightarrow B \\
+              r^{-1} & = \{ y^{-1} : y \in r (x) \} \\
+\end{align*}
+
+\begin{align*}
+              r & : A \rightarrow B \\
+              s & : C \rightarrow D \\
+     r \times s & : A \times C \rightarrow B \sqcup D \\
+             (r + s) & = (r \times P) \vee (P \times s)
 \end{align*}
 
 \subsection{Construction of Fundamental Rules}
