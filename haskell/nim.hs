@@ -1,8 +1,12 @@
 
 module Nim where
 
-import Vec
 import Rule
+import Data.Semigroup
 
-nim :: Rule Vec1 Vec1
+instance Enum a => Enum (Sum a) where
+  toEnum x = Sum (toEnum x)
+  fromEnum (Sum x) = fromEnum x
+
+nim :: Rule (Sum Int) (Sum Int)
 nim n = [-n.. -1]
