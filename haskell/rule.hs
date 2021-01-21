@@ -6,7 +6,7 @@
 module Rule (
   Rule, SymRule,
   graph,
-  void, pass, gate, lift, funLift,
+  void, pass, gate, lift, funLift, contextLift,
   (/.), (/./), (/:), (//:),
   (/*),
   (//), (/\), (/-/),
@@ -14,13 +14,14 @@ module Rule (
   ) where
 
 import Move
-import Grp
+import Group
 
 type Rule a b = a -> [b]
-instance Grp b => Grp (Rule a b) where
+instance Group b => Group (Rule a b) where
   inv r x = map inv $ r x
 
 type SymRule a = Rule a a
+
 
 graph :: Move a b => Rule a b -> a -> [a]
 graph r x = map (# x) $ r x
@@ -31,7 +32,7 @@ void x = []
 pass :: Monoid b => Rule a b
 pass x = [mempty]
 
-gate :: Grp b => (a -> Bool) -> Rule a b
+gate :: Group b => (a -> Bool) -> Rule a b
 gate f x
   | f x = [mempty]
   | otherwise = []
@@ -39,17 +40,20 @@ gate f x
 liftStep :: Int -> Rule a b -> Rule [a] (Select b)
 liftStep i r [] = []
 liftStep i r (x:xs) = map (Select [i]) (r x) ++ (liftStep (i + 1) r xs)
-
 lift = liftStep 0
 
 funLift :: [a] -> (a -> Rule b m) -> Rule (a -> b) (a -> m)
-funLift xs t s = [\y -> z | x <- xs, z <- t x $ s x]
+funLift xs t s = [const z | x <- xs, z <- t x $ s x]
 
-infixr 8 /. -- Dot Product (Closed)
+contextLift :: Eq a => Rule (a, [a]) m -> Rule [a] (Select m)
+contextLift r xs = [Select [i] <$> r (x, filter (/= x) xs) | (i, x) <- zip [0..] xs] >>= id
+
+
+infixr 8 /. -- Dot Product (Closed Version)
 (r /. s) x = [z <> y | y <- s x, z <- r (y # x)]
 
 infixl 9 /: -- Power
-(/:) :: (Move a b, Grp b) => Rule a b -> Int -> Rule a b
+(/:) :: (Move a b, Group b) => Rule a b -> Int -> Rule a b
 r /: n 
   | n <= 1 = r
   | otherwise = r /. r /: (n - 1)
